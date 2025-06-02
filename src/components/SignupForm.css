@@ -1,241 +1,256 @@
-
 /* Modal Styles */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease-out;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
-  from {
-      opacity: 0;
-  }
-  to {
-      opacity: 1;
-  }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .modal-container {
-  background-color: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  animation: slideIn 0.3s ease-out;
+    background-color: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.3s ease-out;
 }
 
 @keyframes slideIn {
-  from {
-      transform: translateY(-50px);
-      opacity: 0;
-  }
-  to {
-      transform: translateY(0);
-      opacity: 1;
-  }
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
 }
 
 .modal-header h2 {
-  margin: 0;
-  color: #333;
-  font-size: 1.5rem;
+    margin: 0;
+    color: #333;
+    font-size: 1.5rem;
 }
 
 .close-btn {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: #777;
-  transition: color 0.2s;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #777;
+    transition: color 0.2s;
 }
 
 .close-btn:hover {
-  color: #333;
+    color: #333;
 }
 
 .modal-body {
-  padding: 20px;
+    padding: 20px;
 }
 
 /* Form Styles */
 .form-group {
-  margin-bottom: 20px;
+    margin-bottom: 20px;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #555;
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #555;
 }
 
 .form-group input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
 }
 
 .form-group input:focus {
-  outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
 }
 
 .form-group input.error {
-  border-color: #e74c3c;
+    border-color: #e74c3c;
 }
 
 .error-message {
-  color: #e74c3c;
-  font-size: 0.85rem;
-  margin-top: 5px;
-  display: block;
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    display: block;
+}
+
+.success-message {
+    color: #2ecc71;
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    display: block;
+    text-align: center;
+}
+
+/* Toast Styles */
+.toast-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000; /* Higher than modal-overlay */
+    animation: fadeIn 0.3s ease-out;
+}
+
+.toast-container {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: slideIn 0.3s ease-out;
+}
+
+.toast-message {
+    color: #2ecc71;
+    font-size: 1rem;
+    font-weight: 500;
 }
 
 .submit-btn {
-  width: 100%;
-  padding: 14px;
-  background-color: #4a90e2;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
+    width: 100%;
+    padding: 14px;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
 .submit-btn:hover {
-  background-color: #3a7bc8;
+    background-color: #3a7bc8;
 }
 
 .submit-btn:disabled {
-  background-color: #a0c4f0;
-  cursor: not-allowed;
+    background-color: #a0c4f0;
+    cursor: not-allowed;
 }
 
 /* Social Login */
 .social-signup {
-  margin-top: 30px;
-  text-align: center;
+    margin-top: 30px;
+    text-align: center;
 }
 
 .social-signup p {
-  color: #777;
-  margin-bottom: 15px;
-  position: relative;
+    color: #777;
+    margin-bottom: 15px;
+    position: relative;
 }
 
 .social-signup p::before,
 .social-signup p::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 35%;
-  height: 1px;
-  background-color: #ddd;
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 35%;
+    height: 1px;
+    background-color: #ddd;
 }
 
 .social-signup p::before {
-  left: 0;
+    left: 0;
 }
 
 .social-signup p::after {
-  right: 0;
+    right: 0;
 }
 
 .social-buttons {
-  display: flex;
-  gap: 10px;
+    display: flex;
+    gap: 10px;
 }
 
 .social-btn {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: white;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  font-weight: 500;
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-weight: 500;
 }
 
 .social-btn.facebook {
-  color: #3b5998;
+    color: #3b5998;
 }
 
 .social-btn.facebook:hover {
-  background-color: #f0f2f7;
+    background-color: #f0f2f7;
 }
 
 .social-btn.google {
-  color: #db4437;
+    color: #db4437;
 }
 
 .social-btn.google:hover {
-  background-color: #fef1f0;
+    background-color: #fef1f0;
 }
 
 .login-link {
-  margin-top: 20px;
-  text-align: center;
-  color: #555;
+    margin-top: 20px;
+    text-align: center;
+    color: #555;
 }
 
 .login-link a {
-  color: #4a90e2;
-  text-decoration: none;
-  font-weight: 500;
+    color: #4a90e2;
+    text-decoration: none;
+    font-weight: 500;
 }
 
 .login-link a:hover {
-  text-decoration: underline;
-}
-
-.form-group.remember-forgot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.remember-me {
-  display: flex;
-  align-items: center;
-}
-
-.remember-me input {
-  width: auto;
-  margin-right: 8px;
-}
-
-.forgot-password {
-  color: #4a90e2;
-  text-decoration: none;
-  font-size: 0.9rem;
-}
-
-.forgot-password:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }

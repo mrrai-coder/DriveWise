@@ -1,32 +1,25 @@
-import logo from "../images/logo5.png"
+import logo from "../images/logo51.png"
 import logo1 from "../logos/facebook-logo-20.png"
 import logo2 from "../logos/instagram-logo-20.png"
 import logo3 from "../logos/youtube-logo-20.png"
 import logo4 from "../logos/twitter-logo-24.png"
 
-const Footer = ({ navigate }) => {
-  const handleNavigation = (page, e) => {
-    e.preventDefault();
-    if (navigate) {
-      navigate(page);
-    }
-  };
-
+const Footer = () => {
   return (
     <footer className="site-footer">
       <div className="container">
         <div className="footer-grid">
           <div className="footer-column">
             <img src={logo || "/placeholder.svg"} alt="Drive Wise logo" />
-            <p className="footer-description">
+            {/* <p className="footer-description">
               Pakistan's premier online platform for buying and selling cars. Get the best value for your vehicle.
-            </p>
+            </p> */}
             <div className="footer-social">
               <a href="#" aria-label="Facebook">
                 <img src={logo1 || "/placeholder.svg"} alt="Facebook logo" className="social-logo" />
               </a>
               <a href="#" aria-label="Instagram">
-                <img src={logo2 || "/placeholder.svg"} alt="Instagram logo" className="social-logo" />
+                <img src={logo2 || "/placeholder.svg"} alt="instagram logo" className="social-logo" />
               </a>
               <a href="#" aria-label="Twitter">
                 <img src={logo4 || "/placeholder.svg"} alt="Twitter logo" className="social-logo" />
@@ -41,25 +34,19 @@ const Footer = ({ navigate }) => {
             <h3 className="footer-title">Quick Links</h3>
             <ul className="footer-links">
               <li>
-                <a href="#" onClick={(e) => handleNavigation("about", e)}>
-                  About Us
-                </a>
+                <a href="#">About Us</a>
               </li>
               <li>
-                <a href="#" onClick={(e) => handleNavigation("car-recommendation", e)}>
-                  Car Recommendation
-                </a>
+                <a href="#">How It Works</a>
               </li>
               <li>
-                <a href="#" onClick={(e) => handleNavigation("all-cars", e)}>
-                  All Cars
-                </a>
+                <a href="#">Car Valuation</a>
               </li>
               <li>
-                <a href="#">Car Financing</a> {/* Placeholder for future page */}
+                <a href="#">Car Financing</a>
               </li>
               <li>
-                <a href="#">FAQs</a> {/* Placeholder for future page */}
+                <a href="#">FAQs</a>
               </li>
             </ul>
           </div>
@@ -68,29 +55,19 @@ const Footer = ({ navigate }) => {
             <h3 className="footer-title">Car Categories</h3>
             <ul className="footer-links">
               <li>
-                <a href="#" onClick={(e) => handleNavigation("all-cars", e)}>
-                  Sedans
-                </a>
+                <a href="#">Sedans</a>
               </li>
               <li>
-                <a href="#" onClick={(e) => handleNavigation("all-cars", e)}>
-                  SUVs
-                </a>
+                <a href="#">SUVs</a>
               </li>
               <li>
-                <a href="#" onClick={(e) => handleNavigation("all-cars", e)}>
-                  Hatchbacks
-                </a>
+                <a href="#">Hatchbacks</a>
               </li>
               <li>
-                <a href="#" onClick={(e) => handleNavigation("all-cars", e)}>
-                  Luxury Cars
-                </a>
+                <a href="#">Luxury Cars</a>
               </li>
               <li>
-                <a href="#" onClick={(e) => handleNavigation("all-cars", e)}>
-                  Commercial Vehicles
-                </a>
+                <a href="#">Commercial Vehicles</a>
               </li>
             </ul>
           </div>

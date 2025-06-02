@@ -1,0 +1,42 @@
+Drive-Wise/
+├── my-app/
+│   ├── app/
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   ├── loading.tsx
+│   │   └── page.tsx
+│   ├── node_modules/
+│   ├── public/
+     ── backend/
+            app.py
+
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── About.jsx
+│   │   │   ├── AuthForms.css
+│   │   │   ├── CtaSection.jsx
+│   │   │   ├── FeaturedCars.jsx
+│   │   │   ├── Footer.jsx
+│   │   │   ├── Header.jsx
+│   │   │   ├── HeroSection.jsx
+│   │   │   ├── LoginForm.jsx
+│   │   │   ├── OurAdvantages.jsx
+│   │   │   ├── PopularBrands.jsx
+│   │   │   ├── PopularCategories.jsx
+│   │   │   ├── SignUpForm.css
+│   │   │   ├── SignUpForm.jsx
+│   │   │   ├── Testimonials.jsx
+│   │   │   └── WhyChooseUs.jsx
+	     └── CarRecommendation.jsx
+│   │   ├── images/
+│   │   ├── pages/
+│   │   │   ├── AllCars.jsx
+│   │   │   └── HomePage.jsx
+│   │   ├── App.css
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── index.js
+│   ├── .gitignore
+│   ├── package-lock.json
+│   ├── package.json
+│   └── README.md

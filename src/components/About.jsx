@@ -1,8 +1,28 @@
 "use client"
-import Header from "./components/Header"
-import Footer from "./components/Footer"
 
-const About = ({ navigate }) => {
+import { useNavigate } from "react-router-dom"
+import Header from "./Header"
+import Footer from "./Footer"
+import Man1_pic from "../images/Testimonials/Male1.png" // Fixed empty import
+import Man2_pic from "../images/Testimonials/Male2.png"
+import Man3_pic from "../images/Testimonials/Male3.png"
+import About_team_pic from "../images/Testimonials/About_team_pic.jpg"
+
+const About = () => {
+  const navigate = useNavigate()
+
+  // Navigation function
+  const handleNavigation = (page) => {
+    if (page === "home") {
+      navigate("/")
+    } else if (page === "all-cars") {
+      navigate("/all-cars")
+    } else if (page === "about") {
+      navigate("/about")
+    }
+    window.scrollTo(0, 0)
+  }
+
   // Company stats
   const stats = [
     { id: 1, value: "10,000+", label: "Cars Listed" },
@@ -15,31 +35,31 @@ const About = ({ navigate }) => {
   const team = [
     {
       id: 1,
-      name: "Sarah Johnson",
+      name: "Rai Aftab",
       role: "Founder & CEO",
-      bio: "With 15+ years in the automotive industry, Sarah founded Drive-Wise to revolutionize how people buy and sell cars.",
-      avatar: "https://via.placeholder.com/200",
+      bio: "With 15+ years in the automotive industry, Rai founded Drive-Wise to revolutionize how people buy and sell cars.",
+      avatar: Man1_pic,
     },
     {
       id: 2,
-      name: "Michael Chen",
+      name: "M Usman",
       role: "Chief Technology Officer",
-      bio: "Michael leads our tech team, ensuring Drive-Wise offers the most innovative and user-friendly car shopping experience.",
-      avatar: "https://via.placeholder.com/200",
+      bio: "Usman leads our tech team, ensuring Drive-Wise offers the most innovative and user-friendly car shopping experience.",
+      avatar: Man2_pic,
     },
     {
       id: 3,
-      name: "Aisha Patel",
+      name: "Muneeb Ahmed",
       role: "Head of Operations",
-      bio: "Aisha oversees day-to-day operations, focusing on creating seamless experiences for both buyers and sellers.",
-      avatar: "https://via.placeholder.com/200",
+      bio: "Muneeb oversees day-to-day operations, focusing on creating seamless experiences for both buyers and sellers.",
+      avatar: Man3_pic,
     },
     {
       id: 4,
-      name: "David Rodriguez",
+      name: "Sajjad Haider",
       role: "Marketing Director",
-      bio: "David brings creative marketing strategies that help connect car buyers with their perfect vehicles.",
-      avatar: "https://via.placeholder.com/200",
+      bio: "Sajjad brings creative marketing strategies that help connect car buyers with their perfect vehicles.",
+      avatar: Man2_pic,
     },
   ]
 
@@ -73,7 +93,7 @@ const About = ({ navigate }) => {
 
   return (
     <div className="site-wrapper">
-      <Header navigate={navigate} />
+      <Header navigate={handleNavigation} />
       <main>
         {/* Hero Section */}
         <section className="about-hero-section">
@@ -94,14 +114,14 @@ const About = ({ navigate }) => {
                 <h2 className="section-title">Our Story</h2>
                 <p className="about-text">
                   Founded in 2020, Drive-Wise was born from a simple idea: car buying should be straightforward,
-                  transparent, and even enjoyable. Our founder, Sarah Johnson, experienced firsthand the frustration of
+                  transparent, and even enjoyable. Our founder, Rai Aftab, experienced firsthand the frustration of
                   searching for a reliable vehicle through traditional methods.
                 </p>
                 <p className="about-text">
                   After months of visiting dealerships, scrolling through endless listings with incomplete information,
-                  and feeling pressured by salespeople, Sarah envisioned a better way. She assembled a team of
-                  automotive experts and tech innovators to create Drive-Wise – a platform where transparency, quality,
-                  and user experience come first.
+                  and feeling pressured by salespeople, Rai envisioned a better way. He assembled a team of automotive
+                  experts and tech innovators to create Drive-Wise – a platform where transparency, quality, and user
+                  experience come first.
                 </p>
                 <p className="about-text">
                   Today, Drive-Wise has grown into Pakistan's trusted automotive marketplace, connecting thousands of
@@ -111,7 +131,7 @@ const About = ({ navigate }) => {
               </div>
               <div className="about-image-container">
                 <div className="about-image-wrapper">
-                  <img src="https://via.placeholder.com/500x400" alt="Drive-Wise team" className="about-image" />
+                  <img src={About_team_pic || "/placeholder.svg"} alt="Drive-Wise team" className="about-image" />
                 </div>
               </div>
             </div>
@@ -147,7 +167,7 @@ const About = ({ navigate }) => {
                   "We're not just listing cars – we're creating a community where knowledge, transparency and trust
                   drive every transaction."
                 </blockquote>
-                <cite>— Sarah Johnson, Founder & CEO</cite>
+                <cite>— Rai Aftab, Founder & CEO</cite>
               </div>
             </div>
           </div>
@@ -199,16 +219,9 @@ const About = ({ navigate }) => {
                 Experience the Drive-Wise difference today.
               </p>
               <div className="join-buttons">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    if (navigate) navigate("all-cars")
-                  }}
-                  className="btn btn-primary"
-                >
+                <button onClick={() => handleNavigation("all-cars")} className="btn btn-primary">
                   Browse Cars
-                </a>
+                </button>
                 <a href="#" className="btn btn-outline">
                   Contact Us
                 </a>
@@ -217,7 +230,7 @@ const About = ({ navigate }) => {
           </div>
         </section>
       </main>
-      <Footer navigate={navigate} />
+      <Footer navigate={handleNavigation} />
     </div>
   )
 }

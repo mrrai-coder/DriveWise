@@ -1,78 +1,74 @@
-
 "use client"
 
-import { useState, useContext } from "react";
-import logo from "../images/logo5.png";
-import logo1 from "../logos/facebook-logo-20.png";
-import logo2 from "../logos/instagram-logo-20.png";
-import logo3 from "../logos/youtube-logo-20.png";
-import logo4 from "../logos/twitter-logo-24.png";
-import SignupForm from "./SignupForm";
-import LoginForm from "./LoginForm";
-import { AuthContext } from "../AuthContext";
-import "./AuthForms.css";
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import logo from "../images/logo5.jpg"
+import SignupForm from "./SignupForm"
+import LoginForm from "./LoginForm"
+import "./AuthForms.css"
 
 const Header = ({ navigate }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [signupFormOpen, setSignupFormOpen] = useState(false);
-  const [loginFormOpen, setLoginFormOpen] = useState(false);
-  
-  // Safely access AuthContext
-  const authContext = useContext(AuthContext);
-  const user = authContext ? authContext.user : null;
-  const logout = authContext ? authContext.logout : () => {};
+  const reactNavigate = useNavigate()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [signupFormOpen, setSignupFormOpen] = useState(false)
+  const [loginFormOpen, setLoginFormOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    setIsLoggedIn(!!token)
+  }, [])
 
   const openSignupForm = () => {
-    setSignupFormOpen(true);
-    setLoginFormOpen(false);
-  };
+    setSignupFormOpen(true)
+    setLoginFormOpen(false)
+  }
 
   const openLoginForm = () => {
-    setLoginFormOpen(true);
-    setSignupFormOpen(false);
-  };
-
-  const handleNavigation = (page, e) => {
-    e.preventDefault();
-    console.log("Header: Attempting to navigate to:", page);
-    if (navigate) {
-      navigate(page);
-      setMobileMenuOpen(false);
-    } else {
-      console.error("Header: Navigate function is undefined");
-    }
-  };
+    setLoginFormOpen(true)
+    setSignupFormOpen(false)
+  }
 
   const handleLogout = () => {
-    logout();
-    navigate("home");
-    setMobileMenuOpen(false);
-  };
+    localStorage.removeItem("token")
+    setIsLoggedIn(false)
+    setMobileMenuOpen(false)
+    reactNavigate("/")
+    window.scrollTo(0, 0)
+  }
+
+  const handleLoginSuccess = () => {
+    console.log("Login success triggered in Header")
+    setIsLoggedIn(true)
+    setLoginFormOpen(false)
+    setSignupFormOpen(false)
+  }
+
+  const handleNavigation = (page, e) => {
+    e.preventDefault()
+
+    if (page === "home") {
+      reactNavigate("/")
+    } else if (page === "all-cars") {
+      reactNavigate("/all-cars")
+    } else if (page === "about") {
+      reactNavigate("/about")
+    } else if (page === "car-recommendation") {
+      reactNavigate("/car-recommendation")
+    } else if (page === "list-car") {
+      reactNavigate("/list-car")
+    }
+
+    if (navigate) {
+      navigate(page)
+    }
+
+    setMobileMenuOpen(false)
+    window.scrollTo(0, 0)
+  }
 
   return (
     <>
-      <div className="top-nav">
-        <div className="container flex-between">
-          <div className="nav-links">
-            <p className="top-header">Drive Wise – The Smarter Way to Choose Your Next Car</p>
-          </div>
-          <div className="social-links desktop-only">
-            <a href="#" aria-label="Facebook">
-              <img src={logo1 || "/placeholder.svg"} alt="Facebook logo" className="social-logo" />
-            </a>
-            <a href="#" aria-label="Instagram">
-              <img src={logo2 || "/placeholder.svg"} alt="Instagram logo" className="social-logo" />
-            </a>
-            <a href="#" aria-label="Twitter">
-              <img src={logo4 || "/placeholder.svg"} alt="Twitter logo" className="social-logo" />
-            </a>
-            <a href="#" aria-label="Youtube">
-              <img src={logo3 || "/placeholder.svg"} alt="Youtube logo" className="social-logo" />
-            </a>
-          </div>
-        </div>
-      </div>
-
       <header className="main-header">
         <div className="container flex-between">
           <a href="#" onClick={(e) => handleNavigation("home", e)} className="logo">
@@ -80,7 +76,7 @@ const Header = ({ navigate }) => {
           </a>
 
           <button className="mobile-menu-btn mobile-only" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <i className="fas fa-times"></i> : <i className="fas fa-bars"></i>}
+            {mobileMenuOpen ? <i className="fa fa-times"></i> : <i className="fa fa-bars"></i>}
           </button>
 
           <nav className="desktop-nav desktop-only">
@@ -90,31 +86,33 @@ const Header = ({ navigate }) => {
             <a href="#" onClick={(e) => handleNavigation("all-cars", e)}>
               All Cars
             </a>
-            <a href="#" onClick={(e) => handleNavigation("car-recommendation", e)}>
-              Car Recommendation
-            </a>
             <a href="#" onClick={(e) => handleNavigation("about", e)}>
               About Us
             </a>
-            {user && (
-              <a href="#" onClick={(e) => handleNavigation("sell-car", e)}>
-                Sell Your Car
-              </a>
+            {isLoggedIn && (
+              <>
+                <a href="#" onClick={(e) => handleNavigation("car-recommendation", e)}>
+                  Car Recommendation
+                </a>
+                <a href="#" onClick={(e) => handleNavigation("list-car", e)}>
+                  List Your Car
+                </a>
+              </>
             )}
           </nav>
 
           <div className="auth-buttons desktop-only">
-            {user ? (
+            {isLoggedIn ? (
               <button className="btn btn-outline" onClick={handleLogout}>
-                <i className="fas fa-sign-out-alt"></i> Log Out
+                <i className="fa fa-sign-out"></i> Log Out
               </button>
             ) : (
               <>
                 <button id="signup-btn" className="btn btn-primary" onClick={openSignupForm}>
-                  <i className="fas fa-user"></i> Sign Up
+                  <i className="fa fa-user"></i> Sign Up
                 </button>
                 <button id="login-btn" className="btn btn-outline" onClick={openLoginForm}>
-                  <i className="fas fa-sign-in-alt"></i> Log In
+                  <i className="fa fa-sign-in"></i> Log In
                 </button>
               </>
             )}
@@ -130,40 +128,42 @@ const Header = ({ navigate }) => {
               <a href="#" onClick={(e) => handleNavigation("all-cars", e)}>
                 All Cars
               </a>
-              <a href="#" onClick={(e) => handleNavigation("car-recommendation", e)}>
-                Car Recommendation
-              </a>
               <a href="#" onClick={(e) => handleNavigation("about", e)}>
                 About Us
               </a>
-              {user && (
-                <a href="#" onClick={(e) => handleNavigation("sell-car", e)}>
-                  Sell Your Car
-                </a>
+              {isLoggedIn && (
+                <>
+                  <a href="#" onClick={(e) => handleNavigation("car-recommendation", e)}>
+                    Car Recommendation
+                  </a>
+                  <a href="#" onClick={(e) => handleNavigation("list-car", e)}>
+                    List Your Car
+                  </a>
+                </>
               )}
-              {user ? (
+              {isLoggedIn ? (
                 <button className="btn btn-outline mobile-login" onClick={handleLogout}>
-                  <i className="fas fa-sign-out-alt"></i> Log Out
+                  <i className="fa fa-sign-out"></i> Log Out
                 </button>
               ) : (
                 <>
                   <button
                     className="btn btn-primary mobile-signup"
                     onClick={() => {
-                      openSignupForm();
-                      setMobileMenuOpen(false);
+                      openSignupForm()
+                      setMobileMenuOpen(false)
                     }}
                   >
-                    <i className="fas fa-user"></i> Sign Up
+                    <i className="fa fa-user"></i> Sign Up
                   </button>
                   <button
                     className="btn btn-outline mobile-login"
                     onClick={() => {
-                      openLoginForm();
-                      setMobileMenuOpen(false);
+                      openLoginForm()
+                      setMobileMenuOpen(false)
                     }}
                   >
-                    <i className="fas fa-sign-in-alt"></i> Log In
+                    <i className="fa fa-sign-in"></i> Log In
                   </button>
                 </>
               )}
@@ -172,14 +172,15 @@ const Header = ({ navigate }) => {
         )}
       </header>
 
-      <SignupForm isOpen={signupFormOpen} onClose={() => setSignupFormOpen(false)} />
+      <SignupForm isOpen={signupFormOpen} onClose={() => setSignupFormOpen(false)} onLoginSuccess={handleLoginSuccess} />
       <LoginForm
         isOpen={loginFormOpen}
         onClose={() => setLoginFormOpen(false)}
         openSignup={openSignupForm}
+        onLoginSuccess={handleLoginSuccess}
       />
     </>
-  );
-};
+  )
+}
 
-export default Header;
+export default Header

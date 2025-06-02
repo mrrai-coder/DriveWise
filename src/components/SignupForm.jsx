@@ -1,191 +1,216 @@
-
 "use client"
 
-import { useState, useContext } from "react";
-import axios from "axios";
-import { AuthContext } from "../AuthContext";
-import "./SignupForm.css";
+import { useState } from "react"
+import axios from "axios"
+import Toast from "./Toast"
+import "./AuthForms.css"
 
-const SignupForm = ({ isOpen, onClose }) => {
-  const { login } = useContext(AuthContext);
+const SignupForm = ({ isOpen, onClose, onLoginSuccess }) => {
   const [formData, setFormData] = useState({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
-  });
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [serverError, setServerError] = useState("");
+    agreeToTerms: false,
+  })
+  const [errors, setErrors] = useState({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [toastMessage, setToastMessage] = useState("")
+  const [toastOpen, setToastOpen] = useState(false)
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target
     setFormData({
       ...formData,
-      [name]: value,
-    });
-    setErrors({ ...errors, [name]: "" });
-    setServerError("");
-  };
+      [name]: type === "checkbox" ? checked : value,
+    })
+  }
 
   const validate = () => {
-    const newErrors = {};
+    const newErrors = {}
 
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required";
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "First name is required"
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Last name is required"
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = "Email is required"
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid";
+      newErrors.email = "Email is invalid"
     }
 
     if (!formData.password) {
-      newErrors.password = "Password is required";
+      newErrors.password = "Password is required"
     } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = "Password must be at least 6 characters"
     }
 
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = "Passwords do not match"
     }
 
-    return newErrors;
-  };
+    if (!formData.agreeToTerms) {
+      newErrors.agreeToTerms = "You must agree to the terms and conditions"
+    }
+
+    return newErrors
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    const newErrors = validate();
+    e.preventDefault()
+    const newErrors = validate()
 
     if (Object.keys(newErrors).length === 0) {
-      setIsSubmitting(true);
+      setIsSubmitting(true)
       try {
-        // Send signup request
-        const response = await axios.post("http://localhost:5000/api/signup", {
-          email: formData.email,
-          password: formData.password,
-        });
-
-        // Automatically log in after signup
-        const loginResponse = await axios.post("http://localhost:5000/api/login", {
-          email: formData.email,
-          password: formData.password,
-        });
-
-        // Update AuthContext with token
-        login(loginResponse.data.token);
-
-        // Reset form and close
-        setFormData({
-          fullName: "",
-          email: "",
-          password: "",
-          confirmPassword: "",
-        });
-        setServerError("");
-        onClose();
+        const response = await axios.post("http://localhost:5000/signup", formData)
+        localStorage.setItem("token", response.data.token)
+        console.log("Signup successful, showing toast: Successfully signed up and logged in")
+        setToastMessage("Successfully signed up and logged in")
+        setToastOpen(true)
+        setIsSubmitting(false)
+        setErrors({})
+        onLoginSuccess()
+        setTimeout(() => {
+          console.log("Closing toast and form")
+          setToastOpen(false)
+          onClose()
+          setFormData({
+            firstName: "",
+            lastName: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+            agreeToTerms: false,
+          })
+        }, 3000)
       } catch (error) {
-        setServerError(error.response?.data?.error || "An error occurred during signup");
-      } finally {
-        setIsSubmitting(false);
+        setIsSubmitting(false)
+        if (error.response && error.response.data.errors) {
+          setErrors(error.response.data.errors)
+        } else {
+          setErrors({ general: "An error occurred. Please try again." })
+        }
       }
     } else {
-      setErrors(newErrors);
+      setErrors(newErrors)
     }
-  };
+  }
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-container">
-        <div className="modal-header">
-          <h2>Create an Account</h2>
-          <button className="close-btn" onClick={onClose}>
-            <i className="fas fa-times"></i>
-          </button>
-        </div>
-        <div className="modal-body">
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="fullName">Full Name</label>
-              <input
-                type="text"
-                id="fullName"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                className={errors.fullName ? "error" : ""}
-              />
-              {errors.fullName && <span className="error-message">{errors.fullName}</span>}
-            </div>
+    <>
+      <div className="modal-overlay">
+        <div className="modal-container">
+          <div className="modal-header">
+            <h2>Create Your Account</h2>
+            <button className="close-btn" onClick={onClose}>
+              <i className="fa fa-times"></i>
+            </button>
+          </div>
+          <div className="modal-body">
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="firstName">First Name</label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className={errors.firstName ? "error" : ""}
+                />
+                {errors.firstName && <span className="error-message">{errors.firstName}</span>}
+              </div>
 
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={errors.email ? "error" : ""}
-              />
-              {errors.email && <span className="error-message">{errors.email}</span>}
-            </div>
+              <div className="form-group">
+                <label htmlFor="lastName">Last Name</label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className={errors.lastName ? "error" : ""}
+                />
+                {errors.lastName && <span className="error-message">{errors.lastName}</span>}
+              </div>
 
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className={errors.password ? "error" : ""}
-              />
-              {errors.password && <span className="error-message">{errors.password}</span>}
-            </div>
+              <div className="form-group">
+                <label htmlFor="email">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={errors.email ? "error" : ""}
+                />
+                {errors.email && <span className="error-message">{errors.email}</span>}
+              </div>
 
-            <div className="form-group">
-              <label htmlFor="confirmPassword">Confirm Password</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className={errors.confirmPassword ? "error" : ""}
-              />
-              {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
-            </div>
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={errors.password ? "error" : ""}
+                />
+                {errors.password && <span className="error-message">{errors.password}</span>}
+              </div>
 
-            {serverError && <span className="error-message">{serverError}</span>}
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Confirm Password</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className={errors.confirmPassword ? "error" : ""}
+                />
+                {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+              </div>
 
-            <div className="form-group">
-              <button type="submit" className="submit-btn" disabled={isSubmitting}>
-                {isSubmitting ? <i className="fas fa-spinner fa-spin"></i> : "Sign Up"}
-              </button>
-            </div>
-          </form>
+              <div className="form-group">
+                <div className="remember-me">
+                  <input
+                    type="checkbox"
+                    id="agreeToTerms"
+                    name="agreeToTerms"
+                    checked={formData.agreeToTerms}
+                    onChange={handleChange}
+                  />
+                  <label htmlFor="agreeToTerms">
+                    I agree to the <a href="#">Terms and Conditions</a>
+                  </label>
+                </div>
+                {errors.agreeToTerms && <span className="error-message">{errors.agreeToTerms}</span>}
+              </div>
 
-          <div className="login-link">
-            Already have an account?{" "}
-            <a
-              href="#"
-              onClick={() => {
-                onClose();
-                document.getElementById("login-btn").click();
-              }}
-            >
-              Log In
-            </a>
+              {errors.general && <span className="error-message">{errors.general}</span>}
+
+              <div className="form-group">
+                <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                  {isSubmitting ? <i className="fa fa-spinner fa-spin"></i> : "Create Account"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
-    </div>
-  );
-};
+      <Toast message={toastMessage} isOpen={toastOpen} onClose={() => setToastOpen(false)} />
+    </>
+  )
+}
 
-
-export default SignupForm;
+export default SignupForm
