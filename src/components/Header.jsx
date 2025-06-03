@@ -12,12 +12,7 @@ const Header = ({ navigate }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [signupFormOpen, setSignupFormOpen] = useState(false)
   const [loginFormOpen, setLoginFormOpen] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-
-  useEffect(() => {
-    const token = localStorage.getItem("token")
-    setIsLoggedIn(!!token)
-  }, [])
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"))
 
   const openSignupForm = () => {
     setSignupFormOpen(true)
@@ -29,21 +24,18 @@ const Header = ({ navigate }) => {
     setSignupFormOpen(false)
   }
 
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true)
+  }
+
   const handleLogout = () => {
     localStorage.removeItem("token")
     setIsLoggedIn(false)
-    setMobileMenuOpen(false)
     reactNavigate("/")
     window.scrollTo(0, 0)
   }
 
-  const handleLoginSuccess = () => {
-    console.log("Login success triggered in Header")
-    setIsLoggedIn(true)
-    setLoginFormOpen(false)
-    setSignupFormOpen(false)
-  }
-
+  // Navigation handler function
   const handleNavigation = (page, e) => {
     e.preventDefault()
 
@@ -53,10 +45,10 @@ const Header = ({ navigate }) => {
       reactNavigate("/all-cars")
     } else if (page === "about") {
       reactNavigate("/about")
-    } else if (page === "car-recommendation") {
-      reactNavigate("/car-recommendation")
-    } else if (page === "list-car") {
-      reactNavigate("/list-car")
+    } else if (page === "sell-car") {
+      reactNavigate("/sell-car")
+    } else if (page === "recommend") {
+      reactNavigate("/recommend")
     }
 
     if (navigate) {
@@ -69,41 +61,41 @@ const Header = ({ navigate }) => {
 
   return (
     <>
+      {/* Main Navigation */}
       <header className="main-header">
         <div className="container flex-between">
+          {/* Logo with home link */}
           <a href="#" onClick={(e) => handleNavigation("home", e)} className="logo">
             <img src={logo || "/placeholder.svg"} alt="Drive Wise logo" />
           </a>
 
+          {/* Mobile menu button */}
           <button className="mobile-menu-btn mobile-only" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <i className="fa fa-times"></i> : <i className="fa fa-bars"></i>}
           </button>
 
+          {/* Desktop Navigation */}
           <nav className="desktop-nav desktop-only">
-            <a href="#" onClick={(e) => handleNavigation("home", e)}>
+            <a href="#" onClick={(e) => handleNavigation("home", e)} className="nav-link">
               Home
             </a>
-            <a href="#" onClick={(e) => handleNavigation("all-cars", e)}>
+            <a href="#" onClick={(e) => handleNavigation("all-cars", e)} className="nav-link">
               All Cars
             </a>
-            <a href="#" onClick={(e) => handleNavigation("about", e)}>
+            <a href="#" onClick={(e) => handleNavigation("sell-car", e)} className="nav-link">
+              Sell Car
+            </a>
+            <a href="#" onClick={(e) => handleNavigation("recommend", e)} className="nav-link">
+              Car Recommendation
+            </a>
+            <a href="#" onClick={(e) => handleNavigation("about", e)} className="nav-link">
               About Us
             </a>
-            {isLoggedIn && (
-              <>
-                <a href="#" onClick={(e) => handleNavigation("car-recommendation", e)}>
-                  Car Recommendation
-                </a>
-                <a href="#" onClick={(e) => handleNavigation("list-car", e)}>
-                  List Your Car
-                </a>
-              </>
-            )}
           </nav>
 
           <div className="auth-buttons desktop-only">
             {isLoggedIn ? (
-              <button className="btn btn-outline" onClick={handleLogout}>
+              <button className="btn btn-primary" onClick={handleLogout}>
                 <i className="fa fa-sign-out"></i> Log Out
               </button>
             ) : (
@@ -119,30 +111,27 @@ const Header = ({ navigate }) => {
           </div>
         </div>
 
+        {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="mobile-nav">
             <nav>
-              <a href="#" onClick={(e) => handleNavigation("home", e)}>
+              <a href="#" onClick={(e) => handleNavigation("home", e)} className="nav-link">
                 Home
               </a>
-              <a href="#" onClick={(e) => handleNavigation("all-cars", e)}>
+              <a href="#" onClick={(e) => handleNavigation("all-cars", e)} className="nav-link">
                 All Cars
               </a>
-              <a href="#" onClick={(e) => handleNavigation("about", e)}>
+              <a href="#" onClick={(e) => handleNavigation("sell-car", e)} className="nav-link">
+                Sell Car
+              </a>
+              <a href="#" onClick={(e) => handleNavigation("recommend", e)} className="nav-link">
+                Car Recommendation
+              </a>
+              <a href="#" onClick={(e) => handleNavigation("about", e)} className="nav-link">
                 About Us
               </a>
-              {isLoggedIn && (
-                <>
-                  <a href="#" onClick={(e) => handleNavigation("car-recommendation", e)}>
-                    Car Recommendation
-                  </a>
-                  <a href="#" onClick={(e) => handleNavigation("list-car", e)}>
-                    List Your Car
-                  </a>
-                </>
-              )}
               {isLoggedIn ? (
-                <button className="btn btn-outline mobile-login" onClick={handleLogout}>
+                <button className="btn btn-primary mobile-logout" onClick={handleLogout}>
                   <i className="fa fa-sign-out"></i> Log Out
                 </button>
               ) : (
@@ -172,7 +161,8 @@ const Header = ({ navigate }) => {
         )}
       </header>
 
-      <SignupForm isOpen={signupFormOpen} onClose={() => setSignupFormOpen(false)} onLoginSuccess={handleLoginSuccess} />
+      {/* Auth Forms */}
+      <SignupForm isOpen={signupFormOpen} onClose={() => setSignupFormOpen(false)} />
       <LoginForm
         isOpen={loginFormOpen}
         onClose={() => setLoginFormOpen(false)}
