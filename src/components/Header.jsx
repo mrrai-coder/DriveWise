@@ -49,6 +49,8 @@ const Header = ({ navigate }) => {
       reactNavigate("/sell-car")
     } else if (page === "recommend") {
       reactNavigate("/recommend")
+    } else if (page === "profile") {
+      reactNavigate("/profile")
     }
 
     if (navigate) {
@@ -91,6 +93,11 @@ const Header = ({ navigate }) => {
             <a href="#" onClick={(e) => handleNavigation("about", e)} className="nav-link">
               About Us
             </a>
+            {isLoggedIn && (
+              <a href="#" onClick={(e) => handleNavigation("profile", e)} className="nav-link">
+                Profile
+              </a>
+            )}
           </nav>
 
           <div className="auth-buttons desktop-only">
@@ -130,6 +137,11 @@ const Header = ({ navigate }) => {
               <a href="#" onClick={(e) => handleNavigation("about", e)} className="nav-link">
                 About Us
               </a>
+              {isLoggedIn && (
+                <a href="#" onClick={(e) => handleNavigation("profile", e)} className="nav-link">
+                  Profile
+                </a>
+              )}
               {isLoggedIn ? (
                 <button className="btn btn-primary mobile-logout" onClick={handleLogout}>
                   <i className="fa fa-sign-out"></i> Log Out
@@ -162,7 +174,7 @@ const Header = ({ navigate }) => {
       </header>
 
       {/* Auth Forms */}
-      <SignupForm isOpen={signupFormOpen} onClose={() => setSignupFormOpen(false)} />
+      <SignupForm isOpen={signupFormOpen} onClose={() => setSignupFormOpen(false)} openLogin={openLoginForm} />
       <LoginForm
         isOpen={loginFormOpen}
         onClose={() => setLoginFormOpen(false)}

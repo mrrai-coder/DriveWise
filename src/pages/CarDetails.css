@@ -1,121 +1,355 @@
+/* Apply box-sizing globally to prevent padding issues */
+* {
+    box-sizing: border-box;
+}
 
+/* Root layout wrapper */
 .site-wrapper {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-  }
-  
-  main {
+    background: #f8fafc;
+}
+
+/* Main content area */
+main {
     flex: 1;
-  }
-  
-  .container {
-    max-width: 1200px;
+}
+
+/* Container for content */
+.container {
+    max-width: 1320px;
     margin: 0 auto;
     padding: 0 1rem;
-  }
-  
-  .car-details-section {
-    padding: 2rem 0;
-  }
-  
-  .breadcrumbs {
+}
+
+/* Loading state */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    min-height: 200px;
+    overflow: visible;
+}
+
+.loading-container p {
+    font-size: 1.125rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Car details section */
+.car-details-section {
+    padding: 4rem 0;
+}
+
+/* Breadcrumbs navigation */
+.breadcrumbs {
     margin-bottom: 1.5rem;
-    color: #666;
-  }
-  
-  .breadcrumbs a {
-    color: #4a90e2;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.breadcrumbs a {
+    color: #2563eb;
     text-decoration: none;
-  }
-  
-  .breadcrumbs a:hover {
+    transition: color 0.2s ease-in-out;
+}
+
+.breadcrumbs a:hover {
+    color: #1e40af;
     text-decoration: underline;
-  }
-  
-  .car-details-container {
+}
+
+/* Car details grid layout */
+.car-details-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr; /* Equal columns, can adjust to 4fr 5fr for slight info emphasis */
     gap: 2rem;
-  }
-  
-  .car-details-image {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 768px) {
+    .car-details-container {
+        grid-template-columns: 1fr;
+        padding: 1.25rem;
+    }
+}
+
+/* Image container */
+.car-details-image {
     position: relative;
-  }
-  
-  .car-details-image img {
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 100%; /* Prevent image column from exceeding its grid allocation */
+}
+
+/* Main image */
+.car-details-image img {
     width: 100%;
-    height: 300px;
+    height: 400px;
     object-fit: cover;
-    border-radius: 8px;
-  }
-  
-  .featured-tag {
+    border-radius: 10px;
+    transition: transform 0.3s ease;
+    display: block;
+}
+
+.car-details-image img:hover {
+    transform: scale(1.03);
+}
+
+/* Image gallery */
+.image-gallery {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+/* Gallery navigation buttons */
+.gallery-controls {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    transform: translateY(-50%);
+    padding: 0 10px;
+}
+
+.gallery-btn {
+    background: rgba(0, 0, 0, 0.65);
+    color: #ffffff;
+    border: none;
+    padding: 0.8rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.gallery-btn:hover {
+    background: rgba(0, 0, 0, 0.85);
+    transform: scale(1.08);
+}
+
+/* Thumbnail grid */
+.thumbnail-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+    overflow: hidden;
+    max-width: 100%; /* Ensure thumbnails don’t stretch the container */
+}
+
+.thumbnail {
+    width: 100%;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.thumbnail.active {
+    border-color: #2563eb;
+    transform: scale(1.03);
+}
+
+.thumbnail:hover {
+    transform: scale(1.03);
+}
+
+/* Featured tag */
+.featured-tag {
     position: absolute;
     top: 10px;
     right: 10px;
-    background: #f59e0b;
-    color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.875rem;
-  }
-  
-  .car-details-info {
-    padding: 1rem;
-  }
-  
-  .car-title {
-    font-size: 2rem;
-    margin: 0 0 0.5rem;
-  }
-  
-  .car-price {
-    font-size: 1.5rem;
+    background: #ea580c;
+    color: #ffffff;
+    padding: 0.4rem 0.9rem;
+    border-radius: 5px;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: #4a90e2;
-    margin-bottom: 0.5rem;
-  }
-  
-  .car-location {
-    color: #666;
-    margin-bottom: 1rem;
-  }
-  
-  .car-specs {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .car-spec {
+    text-transform: uppercase;
+}
+
+/* Car details information panel */
+.car-details-info {
+    padding: 2rem;
+    background: #f9fafb;
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 100%; /* Prevent info column from exceeding its grid allocation */
+}
+
+/* Car title */
+.car-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 0.75rem;
+    overflow-wrap: break-word;
+    line-height: 1.3;
+}
+
+/* Car price */
+.car-price {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #2563eb;
+    margin-bottom: 0.75rem;
+    overflow-wrap: break-word;
+}
+
+/* Car location */
+.car-location {
+    color: #6b7280;
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+    overflow-wrap: break-word;
+}
+
+/* Car specifications container */
+.car-specs {
+    
+    
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    min-height: 400px;
+}
+
+/* Individual specification card */
+.car-spec {
     display: flex;
-    justify-content: space-between;
-  }
-  
-  .spec-label {
-    font-weight: 500;
-  }
-  
-  .spec-value {
-    color: #666;
-  }
-  
-  .btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 4px;
+    align-items: center;
+    padding: 1rem;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    min-height: 60px;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+    overflow: visible;
+}
+
+/* Specification icon */
+.spec-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 1rem;
+    color: #2563eb;
+    flex-shrink: 0;
+}
+
+/* Specification label */
+.spec-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    flex: 1;
+    overflow-wrap: break-word;
+    min-width: 100px;
+    max-width: 55%;
+}
+
+/* Specification value */
+.spec-value {
+    font-size: 1rem;
+    color: #6b7280;
+    font-weight: 400;
+    overflow-wrap: break-word;
+    text-align: right;
+    flex: 1;
+    max-width: 40%;
+}
+
+/* Button styles */
+.btn {
+    padding: 0.9rem 2rem;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 1rem;
-  }
-  
-  .btn-primary {
-    background: #4a90e2;
-    color: white;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1.25rem;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: #ffffff;
     border: none;
-  }
-  
-  .btn-primary:hover {
-    background: #3a7bc8;
-  }
-  
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+    background: #1e40af;
+    transform: translateY(-2px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .car-title {
+        font-size: 1.75rem;
+    }
+
+    .car-price {
+        font-size: 1.5rem;
+    }
+
+    .car-details-info {
+        padding: 1.25rem;
+    }
+
+    .car-spec {
+        padding: 1rem;
+        min-height: 70px;
+        flex-wrap: wrap;
+    }
+
+    .spec-label,
+    .spec-value {
+        max-width: 100%;
+        text-align: left;
+    }
+
+    .spec-value {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .car-details-section {
+        padding: 2rem 0;
+    }
+
+    .car-spec {
+        padding: 0.75rem;
+        min-height: 60px;
+    }
+
+    .spec-icon {
+        width: 24px;
+        height: 24px;
+        margin-right: 0.75rem;
+    }
+}

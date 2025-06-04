@@ -16,6 +16,8 @@ const AllCars = () => {
     maxPrice: "",
     sort: "price-asc",
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentImages, setCurrentImages] = useState({}); // Track current image per car
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -23,6 +25,12 @@ const AllCars = () => {
         const response = await axios.get("http://localhost:5000/api/cars");
         setCars(response.data);
         setLoading(false);
+        // Initialize current image index for each car
+        const initialImages = {};
+        response.data.forEach(car => {
+          initialImages[car._id] = 0;
+        });
+        setCurrentImages(initialImages);
       } catch (err) {
         setError(err.response?.data?.error || "Failed to load cars");
         setLoading(false);
@@ -48,6 +56,13 @@ const AllCars = () => {
       const response = await axios.get(`http://localhost:5000/api/cars?${query.toString()}`);
       setCars(response.data);
       setLoading(false);
+      setCurrentPage(1);
+      // Reset current images
+      const initialImages = {};
+      response.data.forEach(car => {
+        initialImages[car._id] = 0;
+      });
+      setCurrentImages(initialImages);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to apply filters");
       setLoading(false);
@@ -61,11 +76,17 @@ const AllCars = () => {
       maxPrice: "",
       sort: "price-asc",
     });
+    setCurrentPage(1);
     const fetchCars = async () => {
       try {
         const response = await axios.get("http://localhost:5000/api/cars");
         setCars(response.data);
         setLoading(false);
+        const initialImages = {};
+        response.data.forEach(car => {
+          initialImages[car._id] = 0;
+        });
+        setCurrentImages(initialImages);
       } catch (err) {
         setError(err.response?.data?.error || "Failed to load cars");
         setLoading(false);
@@ -74,8 +95,13 @@ const AllCars = () => {
     fetchCars();
   };
 
-  const handleCarClick = (carId) => {
-    navigate(`/CarDetails/${carId}`); // Absolute path
+  const handleImageChange = (carId, index) => {
+    setCurrentImages(prev => ({ ...prev, [carId]: index }));
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    // TODO: Implement dynamic pagination with backend API
   };
 
   if (loading) {
@@ -209,63 +235,102 @@ const AllCars = () => {
               Showing {cars.length} {cars.length === 1 ? "car" : "cars"}
             </div>
             <div className="car-grid">
-              {cars.map((car) => (
-                <div
-                  key={car._id}
-                  className="car-card"
-                  onClick={() => handleCarClick(car._id)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <div className="car-image-container">
-                    <img
-                      src={
-                        Array.isArray(car.images) && car.images.length > 0
-                          ? car.images[0].startsWith("/uploads")
-                            ? `http://localhost:5000${car.images[0]}`
-                            : car.images[0]
-                          : "https://via.placeholder.com/300x200"
-                      }
-                      alt={car.name}
-                      className="car-image"
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/300x200";
-                      }}
-                    />
-                    {car.featured && <div className="featured-tag">Featured</div>}
-                  </div>
-                  <div className="car-details">
-                    <h2 className="car-title">{car.name}</h2>
-                    <p className="car-location">{car.location}</p>
-                    <div className="car-price-row">
-                      <span className="car-price">PKR {car.price.toLocaleString()}</span>
-                      <span className="car-posted">{car.postedDays} days ago</span>
+              {cars.map((car) => {
+                const imageUrls = Array.isArray(car.images) && car.images.length > 0
+                  ? car.images.map(img => img.startsWith("/uploads") ? `http://localhost:5000${img}` : img)
+                  : ["https://via.placeholder.com/300x200"];
+                const currentImageIndex = currentImages[car._id] || 0;
+
+                return (
+                  <div key={car._id} className="car-card">
+                    <div className="car-image-container">
+                      {imageUrls.length > 0 ? (
+                        <img
+                          src={imageUrls[currentImageIndex]}
+                          alt={car.name}
+                          className="car-image"
+                          onError={(e) => {
+                            e.target.src = "https://via.placeholder.com/300x200";
+                            e.target.className = "image-fallback";
+                            e.target.alt = "Image not available";
+                          }}
+                        />
+                      ) : (
+                        <div className="image-fallback">Image not available</div>
+                      )}
+                      {car.featured && <div className="featured-tag">Featured</div>}
+                      {imageUrls.length > 1 && (
+                        <div className="image-thumbnails">
+                          {imageUrls.map((url, index) => (
+                            <img
+                              key={index}
+                              src={url}
+                              alt={`${car.name} thumbnail ${index + 1}`}
+                              className={`thumbnail ${index === currentImageIndex ? "active" : ""}`}
+                              onClick={() => handleImageChange(car._id, index)}
+                              onError={(e) => {
+                                e.target.src = "https://via.placeholder.com/60x40";
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="car-specs">
-                      <div className="car-spec">
-                        <span className="spec-label">Year:</span>
-                        <span className="spec-value">{car.year}</span>
+                    <div className="car-details">
+                      <h2 className="car-title">{car.name}</h2>
+                      <p className="car-price">PKR {car.price.toLocaleString()}</p>
+                      <p className="car-location">{car.location}</p>
+                      <div className="car-specs">
+                        <div className="car-spec">
+                          <svg className="spec-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="spec-label">Year:</span>
+                          <span className="spec-value">{car.year}</span>
+                        </div>
+                        <div className="car-spec">
+                          <svg className="spec-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                          </svg>
+                          <span className="spec-label">Mileage:</span>
+                          <span className="spec-value">{car.mileage.toLocaleString()} km</span>
+                        </div>
+                        <div className="car-spec">
+                          <svg className="spec-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                          </svg>
+                          <span className="spec-label">Fuel:</span>
+                          <span className="spec-value">{car.fuel}</span>
+                        </div>
+                        <div className="car-spec">
+                          <svg className="spec-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                          </svg>
+                          <span className="spec-label">Transmission:</span>
+                          <span className="spec-value">{car.transmission}</span>
+                        </div>
                       </div>
-                      <div className="car-spec">
-                        <span className="spec-label">Mileage:</span>
-                        <span className="spec-value">{car.mileage.toLocaleString()} km</span>
-                      </div>
-                      <div className="car-spec">
-                        <span className="spec-label">Fuel:</span>
-                        <span className="spec-value">{car.fuel}</span>
-                      </div>
-                      <div className="car-spec">
-                        <span className="spec-label">Transmission:</span>
-                        <span className="spec-value">{car.transmission}</span>
-                      </div>
+                      <button
+                        className="view-details-btn"
+                        onClick={() => navigate(`/cars/${car._id}`)}
+                      >
+                        View Details
+                      </button>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="pagination">
-              <button className="pagination-btn">1</button>
-              <button className="pagination-btn">2</button>
-              <button className="pagination-btn">3</button>
+              {[1, 2, 3].map(page => (
+                <button
+                  key={page}
+                  className={`pagination-btn ${currentPage === page ? "active" : ""}`}
+                  onClick={() => handlePageChange(page)}
+                >
+                  {page}
+                </button>
+              ))}
             </div>
           </div>
         </section>
