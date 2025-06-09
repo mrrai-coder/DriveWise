@@ -7,8 +7,8 @@ import SignupForm from "./SignupForm"
 import LoginForm from "./LoginForm"
 import "./AuthForms.css"
 
-const Header = ({ navigate }) => {
-  const reactNavigate = useNavigate()
+const Header = () => {
+  const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [signupFormOpen, setSignupFormOpen] = useState(false)
   const [loginFormOpen, setLoginFormOpen] = useState(false)
@@ -31,32 +31,14 @@ const Header = ({ navigate }) => {
   const handleLogout = () => {
     localStorage.removeItem("token")
     setIsLoggedIn(false)
-    reactNavigate("/")
+    navigate("/")
     window.scrollTo(0, 0)
   }
 
   // Navigation handler function
   const handleNavigation = (page, e) => {
     e.preventDefault()
-
-    if (page === "home") {
-      reactNavigate("/")
-    } else if (page === "all-cars") {
-      reactNavigate("/all-cars")
-    } else if (page === "about") {
-      reactNavigate("/about")
-    } else if (page === "sell-car") {
-      reactNavigate("/sell-car")
-    } else if (page === "recommend") {
-      reactNavigate("/recommend")
-    } else if (page === "profile") {
-      reactNavigate("/profile")
-    }
-
-    if (navigate) {
-      navigate(page)
-    }
-
+    navigate(`/${page === "home" ? "" : page}`)
     setMobileMenuOpen(false)
     window.scrollTo(0, 0)
   }
