@@ -1,228 +1,473 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import pymongo
+from pymongo import MongoClient
+from bson import json_util, ObjectId
 import bcrypt
-import jwt
-from datetime import datetime, timedelta
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from datetime import timedelta
+import os
+from dotenv import load_dotenv
+import json
+import uuid
+import joblib
+import pandas as pd
 import re
-import base64
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for React frontend
+CORS(app, resources={
+    r"/api/*": {"origins": "http://localhost:3000"},
+    r"/uploads/*": {"origins": "http://localhost:3000"},
+    r"/predict": {"origins": "http://localhost:3000"}
+})
 
-# MongoDB connection
-client = pymongo.MongoClient("mongodb://localhost:27017/")
+# MongoDB configuration
+mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+client = MongoClient(mongo_uri)
 db = client["drivewise"]
 users_collection = db["users"]
 cars_collection = db["cars"]
 
-# JWT Secret Key (use environment variable in production)
-SECRET_KEY = "your-secret-key"  # Replace with a secure key
+# JWT configuration
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "your-secret-key")
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
+jwt = JWTManager(app)
 
-# Email validation regex
-EMAIL_REGEX = re.compile(r"^\S+@\S+\.\S+$")
+# Uploads directory configuration
+UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
-# Middleware to verify JWT token
-def verify_token(token):
-    try:
-        decoded = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        return decoded["email"]
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.InvalidTokenError:
-        return None
+# Load the Random Forest model and label encoder
+MODEL_PATH = os.path.join(os.getcwd(), "models", "random_forest_model.pkl")
+ENCODER_PATH = os.path.join(os.getcwd(), "models", "car_name_label_encoder.pkl")
+try:
+    model = joblib.load(MODEL_PATH)
+    car_name_encoder = joblib.load(ENCODER_PATH)
+except FileNotFoundError:
+    print(f"Error: Model or encoder file not found at {MODEL_PATH} or {ENCODER_PATH}")
+    exit(1)
 
-@app.route("/signup", methods=["POST"])
+# Helper functions
+def parse_json(data):
+    if isinstance(data, list):
+        return [parse_json(item) for item in data]
+    if isinstance(data, dict):
+        result = {}
+        for key, value in data.items():
+            if key == "_id" and isinstance(value, ObjectId):
+                result[key] = str(value)
+            else:
+                result[key] = parse_json(value)
+        return result
+    return data
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def validate_phone_number(phone):
+    # Pakistani phone number format: +92 or 0 followed by 10 digits, e.g., +923001234567 or 03001234567
+    pattern = r"^(\+92[0-9]{10}|0[0-9]{10})$"
+    return bool(re.match(pattern, phone))
+
+# Serve uploaded images
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
+# Signup endpoint
+@app.route("/api/signup", methods=["POST"])
 def signup():
     data = request.get_json()
-    first_name = data.get("firstName")
-    last_name = data.get("lastName")
+    full_name = data.get("fullName")
     email = data.get("email")
     password = data.get("password")
-    confirm_password = data.get("confirmPassword")
-    agree_to_terms = data.get("agreeToTerms")
+    contact_number = data.get("contactNumber", "")
 
-    # Validation
-    errors = {}
-    if not first_name or not first_name.strip():
-        errors["firstName"] = "First name is required"
-    if not last_name or not last_name.strip():
-        errors["lastName"] = "Last name is required"
-    if not email or not email.strip():
-        errors["email"] = "Email is required"
-    elif not EMAIL_REGEX.match(email):
-        errors["email"] = "Email is invalid"
-    if not password:
-        errors["password"] = "Password is required"
-    elif len(password) < 6:
-        errors["password"] = "Password must be at least 6 characters"
-    if password != confirm_password:
-        errors["confirmPassword"] = "Passwords do not match"
-    if not agree_to_terms:
-        errors["agreeToTerms"] = "You must agree to the terms and conditions"
+    if not full_name or not email or not password:
+        return jsonify({"error": "Full name, email, and password are required"}), 400
 
-    if errors:
-        return jsonify({"errors": errors}), 400
-
-    # Check if email already exists
     if users_collection.find_one({"email": email}):
-        return jsonify({"errors": {"email": "Email already exists"}}), 400
+        return jsonify({"error": "Email already registered"}), 400
 
-    # Hash password
+    if contact_number and not validate_phone_number(contact_number):
+        return jsonify({"error": "Invalid phone number format. Use +923001234567 or 03001234567"}), 400
+
     hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-
-    # Save user to MongoDB
-    user = {
-        "firstName": first_name,
-        "lastName": last_name,
-        "email": email,
-        "password": hashed_password,
-        "createdAt": datetime.utcnow()
-    }
+    user = {"fullName": full_name, "email": email, "password": hashed_password, "contactNumber": contact_number, "profilePicture": ""}
     users_collection.insert_one(user)
 
-    # Generate JWT token
-    token = jwt.encode(
-        {"email": email, "exp": datetime.utcnow() + timedelta(hours=24)},
-        SECRET_KEY,
-        algorithm="HS256"
-    )
+    return jsonify({"message": "User registered successfully"}), 201
 
-    return jsonify({"message": "Signup successful", "token": token}), 201
-
-@app.route("/login", methods=["POST"])
+# Login endpoint
+@app.route("/api/login", methods=["POST"])
 def login():
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
 
-    # Validation
-    errors = {}
-    if not email or not email.strip():
-        errors["email"] = "Email is required"
-    elif not EMAIL_REGEX.match(email):
-        errors["email"] = "Email is invalid"
-    if not password:
-        errors["password"] = "Password is required"
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
 
-    if errors:
-        return jsonify({"errors": errors}), 400
-
-    # Find user
     user = users_collection.find_one({"email": email})
-    if not user:
-        return jsonify({"errors": {"email": "Email not found"}}), 400
+    if not user or not bcrypt.checkpw(password.encode("utf-8"), user["password"]):
+        return jsonify({"error": "Invalid email or password"}), 401
 
-    # Verify password
-    if not bcrypt.checkpw(password.encode("utf-8"), user["password"]):
-        return jsonify({"errors": {"password": "Incorrect password"}}), 400
+    access_token = create_access_token(identity=email)
+    return jsonify({"token": access_token, "message": "Login successful"}), 200
 
-    # Generate JWT token
-    token = jwt.encode(
-        {"email": email, "exp": datetime.utcnow() + timedelta(hours=24)},
-        SECRET_KEY,
-        algorithm="HS256"
-    )
-
-    return jsonify({"message": "Login successful", "token": token}), 200
-
-@app.route("/list-car", methods=["POST"])
+# List car endpoint
+@app.route("/api/list-car", methods=["POST"])
+@jwt_required()
 def list_car():
-    token = request.headers.get("Authorization")
-    if not token or not token.startswith("Bearer "):
-        return jsonify({"errors": {"general": "Authentication required"}}), 401
+    user_email = get_jwt_identity()
 
-    email = verify_token(token.split("Bearer ")[1])
-    if not email:
-        return jsonify({"errors": {"general": "Invalid or expired token"}}), 401
+    if not request.form:
+        return jsonify({"error": "Form data is required"}), 400
 
-    user = users_collection.find_one({"email": email})
-    if not user:
-        return jsonify({"errors": {"general": "User not found"}}), 404
+    required_fields = ["name", "location", "price", "year", "mileage", "fuel", "transmission", "category"]
+    for field in required_fields:
+        if field not in request.form or not request.form[field]:
+            return jsonify({"error": f"{field} is required"}), 400
 
-    data = request.form
-    name = data.get("name")
-    location = data.get("location")
-    price = data.get("price")
-    year = data.get("year")
-    mileage = data.get("mileage")
-    fuel = data.get("fuel")
-    transmission = data.get("transmission")
-    make = data.get("make")
-    model = data.get("model")
-    description = data.get("description")
-    images = request.files.getlist("images")
+    try:
+        price = float(request.form["price"])
+        year = int(request.form["year"])
+        mileage = int(request.form["mileage"])
+    except (ValueError, TypeError):
+        return jsonify({"error": "Price, year, and mileage must be numeric"}), 400
 
-    # Validation
-    errors = {}
-    if not name or not name.strip():
-        errors["name"] = "Car name is required"
-    if not location or not location.strip():
-        errors["location"] = "Location is required"
-    if not price or not price.strip():
-        errors["price"] = "Price is required"
-    elif not price.isdigit() or int(price) <= 0:
-        errors["price"] = "Price must be a positive number"
-    if not year or not year.strip():
-        errors["year"] = "Year is required"
-    elif not year.isdigit() or int(year) < 1900 or int(year) > datetime.now().year:
-        errors["year"] = "Invalid year"
-    if not mileage or not mileage.strip():
-        errors["mileage"] = "Mileage is required"
-    elif not mileage.isdigit() or int(mileage) < 0:
-        errors["mileage"] = "Mileage must be a non-negative number"
-    if not fuel or not fuel.strip():
-        errors["fuel"] = "Fuel type is required"
-    if not transmission or not transmission.strip():
-        errors["transmission"] = "Transmission type is required"
-    if not make or not make.strip():
-        errors["make"] = "Make is required"
-    if not model or not model.strip():
-        errors["model"] = "Model is required"
-    if not description or not description.strip():
-        errors["description"] = "Description is required"
-    if not images or len(images) == 0:
-        errors["images"] = "At least one image is required"
+    image_urls = []
+    if "images" in request.files:
+        files = request.files.getlist("images")
+        for file in files:
+            if file and allowed_file(file.filename):
+                file.seek(0, os.SEEK_END)
+                file_size = file.tell()
+                if file_size > MAX_FILE_SIZE:
+                    return jsonify({"error": f"File {file.filename} exceeds 5MB limit"}), 400
+                file.seek(0)
+                filename = f"{uuid.uuid4().hex}.{file.filename.rsplit('.', 1)[1].lower()}"
+                file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                file.save(file_path)
+                image_urls.append(f"/uploads/{filename}")
+            else:
+                return jsonify({"error": f"Invalid file type for {file.filename}. Allowed: jpg, jpeg, png, gif"}), 400
+    else:
+        image_urls.append("https://via.placeholder.com/300x200")
 
-    if errors:
-        return jsonify({"errors": errors}), 400
-
-    # Handle multiple image uploads
-    image_data_list = []
-    for image in images:
-        image_data = base64.b64encode(image.read()).decode("utf-8")
-        image_type = image.content_type
-        image_data_list.append(f"data:{image_type};base64,{image_data}")
-
-    # Save car to MongoDB
     car = {
-        "name": name,
-        "location": location,
-        "price": int(price),
-        "year": int(year),
-        "mileage": int(mileage),
-        "fuel": fuel,
-        "transmission": transmission,
-        "make": make,
-        "model": model,
-        "description": description,
-        "images": image_data_list,  # Store list of images
-        "image": image_data_list[0] if image_data_list else "",  # Set first image as primary for compatibility
-        "userId": str(user["_id"]),
+        "name": request.form["name"],
+        "location": request.form["location"],
+        "price": price,
+        "year": year,
+        "mileage": mileage,
+        "fuel": request.form["fuel"],
+        "transmission": request.form["transmission"],
         "postedDays": 0,
-        "createdAt": datetime.utcnow(),
-        "featured": False
+        "images": image_urls,
+        "featured": request.form.get("featured", "false").lower() == "true",
+        "make": request.form.get("make", ""),
+        "model": request.form.get("model", ""),
+        "category": request.form["category"],
+        "seller_email": user_email
     }
+
     result = cars_collection.insert_one(car)
+    car["_id"] = str(result.inserted_id)
+    return jsonify({"message": "Car listed successfully", "car": parse_json(car)}), 201
 
-    return jsonify({"message": "Car listed successfully", "carId": str(result.inserted_id)}), 201
+# Get all cars endpoint
+@app.route("/api/cars", methods=["GET"])
+def get_cars():
+    query = {}
+    if request.args.get("featured") == "true":
+        query["featured"] = True
+    cars = list(cars_collection.find(query))
+    return jsonify(parse_json(cars)), 200
 
-@app.route("/all-cars", methods=["GET"])
-def get_all_cars():
-    cars = list(cars_collection.find({}, {"_id": 0, "userId": 0}))
-    for car in cars:
-        car["id"] = str(car.pop("_id"))
-    return jsonify({"cars": cars}), 200
+# Get category counts endpoint
+@app.route("/api/categories", methods=["GET"])
+def get_category_counts():
+    try:
+        pipeline = [
+            {"$group": {"_id": "$category", "count": {"$sum": 1}}},
+            {"$project": {"name": "$_id", "count": 1, "_id": 0}}
+        ]
+        counts = list(cars_collection.aggregate(pipeline))
+        return jsonify(counts), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Get single car by ID endpoint
+@app.route("/api/cars/<id>", methods=["GET"])
+def get_car(id):
+    try:
+        car = cars_collection.find_one({"_id": ObjectId(id)})
+        if not car:
+            return jsonify({"error": "Car not found"}), 404
+        return jsonify(parse_json(car)), 200
+    except Exception as e:
+        print(f"Error fetching car with ID {id}: {str(e)}")
+        return jsonify({"error": "Invalid car ID"}), 400
+
+# User profile endpoint
+@app.route("/api/user-profile", methods=["GET"])
+@jwt_required()
+def get_user_profile():
+    try:
+        user_email = get_jwt_identity()
+        user = users_collection.find_one({"email": user_email})
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        user_cars = list(cars_collection.find({"seller_email": user_email}))
+        user_data = {
+            "fullName": user.get("fullName"),
+            "email": user.get("email"),
+            "contactNumber": user.get("contactNumber", ""),
+            "profilePicture": user.get("profilePicture", ""),
+            "cars": parse_json(user_cars)
+        }
+        return jsonify(user_data), 200
+    except Exception as e:
+        print(f"Error fetching user profile: {str(e)}")
+        return jsonify({"error": "Failed to fetch profile"}), 500
+
+# Update user details endpoint
+@app.route("/api/update-user", methods=["PUT"])
+@jwt_required()
+def update_user():
+    try:
+        user_email = get_jwt_identity()
+        data = request.form
+        update_data = {}
+
+        if "contactNumber" in data and data["contactNumber"]:
+            if not validate_phone_number(data["contactNumber"]):
+                return jsonify({"error": "Invalid phone number format. Use +923001234567 or 03001234567"}), 400
+            update_data["contactNumber"] = data["contactNumber"]
+
+        if "profilePicture" in request.files:
+            file = request.files["profilePicture"]
+            if file and allowed_file(file.filename):
+                file.seek(0, os.SEEK_END)
+                file_size = file.tell()
+                if file_size > MAX_FILE_SIZE:
+                    return jsonify({"error": "Profile picture exceeds 5MB limit"}), 400
+                file.seek(0)
+                filename = f"{uuid.uuid4().hex}.{file.filename.rsplit('.', 1)[1].lower()}"
+                file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                file.save(file_path)
+                update_data["profilePicture"] = f"/uploads/{filename}"
+
+                # Delete old profile picture if it exists
+                user = users_collection.find_one({"email": user_email})
+                if user.get("profilePicture") and user["profilePicture"].startswith("/uploads/"):
+                    old_file = user["profilePicture"].split("/")[-1]
+                    old_file_path = os.path.join(app.config["UPLOAD_FOLDER"], old_file)
+                    if os.path.exists(old_file_path):
+                        os.remove(old_file_path)
+
+        if not update_data:
+            return jsonify({"error": "No valid data provided"}), 400
+
+        users_collection.update_one({"email": user_email}, {"$set": update_data})
+        return jsonify({"message": "User details updated successfully"}), 200
+    except Exception as e:
+        print(f"Error updating user: {str(e)}")
+        return jsonify({"error": "Failed to update user details"}), 500
+
+# Update car listing endpoint
+@app.route("/api/update-car/<id>", methods=["PUT"])
+@jwt_required()
+def update_car(id):
+    try:
+        user_email = get_jwt_identity()
+        car = cars_collection.find_one({"_id": ObjectId(id), "seller_email": user_email})
+        if not car:
+            return jsonify({"error": "Car not found or not authorized"}), 404
+
+        data = request.form
+        update_data = {}
+
+        for field in ["name", "location", "price", "year", "mileage", "fuel", "transmission", "category", "make", "model"]:
+            if field in data and data[field]:
+                update_data[field] = float(data[field]) if field in ["price", "year", "mileage"] else data[field]
+
+        if "featured" in data:
+            update_data["featured"] = data["featured"].lower() == "true"
+
+        new_images = []
+        if "images" in request.files:
+            files = request.files.getlist("images")
+            for file in files:
+                if file and allowed_file(file.filename):
+                    file.seek(0, os.SEEK_END)
+                    file_size = file.tell()
+                    if file_size > MAX_FILE_SIZE:
+                        return jsonify({"error": f"File {file.filename} exceeds 5MB limit"}), 400
+                    file.seek(0)
+                    filename = f"{uuid.uuid4().hex}.{file.filename.rsplit('.', 1)[1].lower()}"
+                    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                    file.save(file_path)
+                    new_images.append(f"/uploads/{filename}")
+
+            if new_images:
+                # Delete old images
+                for image_url in car.get("images", []):
+                    if image_url.startswith("/uploads/"):
+                        filename = image_url.split("/")[-1]
+                        file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                update_data["images"] = new_images
+
+        if not update_data:
+            return jsonify({"error": "No valid data provided"}), 400
+
+        cars_collection.update_one({"_id": ObjectId(id)}, {"$set": update_data})
+        return jsonify({"message": "Car updated successfully"}), 200
+    except Exception as e:
+        print(f"Error updating car with ID {id}: {str(e)}")
+        return jsonify({"error": "Failed to update car"}), 500
+
+# Change password endpoint
+@app.route("/api/change-password", methods=["PUT"])
+@jwt_required()
+def change_password():
+    try:
+        user_email = get_jwt_identity()
+        data = request.get_json()
+        current_password = data.get("currentPassword")
+        new_password = data.get("newPassword")
+
+        if not current_password or not new_password:
+            return jsonify({"error": "Current and new password are required"}), 400
+
+        if len(new_password) < 8:
+            return jsonify({"error": "New password must be at least 8 characters long"}), 400
+
+        user = users_collection.find_one({"email": user_email})
+        if not user or not bcrypt.checkpw(current_password.encode("utf-8"), user["password"]):
+            return jsonify({"error": "Current password is incorrect"}), 401
+
+        hashed_password = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt())
+        users_collection.update_one({"email": user_email}, {"$set": {"password": hashed_password}})
+        return jsonify({"message": "Password changed successfully"}), 200
+    except Exception as e:
+        print(f"Error changing password: {str(e)}")
+        return jsonify({"error": "Failed to change password"}), 500
+
+# Delete car listing endpoint
+@app.route("/api/delete-car/<id>", methods=["DELETE"])
+@jwt_required()
+def delete_car(id):
+    try:
+        user_email = get_jwt_identity()
+        car = cars_collection.find_one({"_id": ObjectId(id), "seller_email": user_email})
+        if not car:
+            return jsonify({"error": "Car not found or not authorized"}), 404
+
+        # Delete associated images
+        for image_url in car.get("images", []):
+            if image_url.startswith("/uploads/"):
+                filename = image_url.split("/")[-1]
+                file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+
+        cars_collection.delete_one({"_id": ObjectId(id)})
+        return jsonify({"message": "Car deleted successfully"}), 200
+    except Exception as e:
+        print(f"Error deleting car with ID {id}: {str(e)}")
+        return jsonify({"error": "Failed to delete car"}), 500
+
+# Delete account endpoint
+@app.route("/api/delete-account", methods=["DELETE"])
+@jwt_required()
+def delete_account():
+    try:
+        user_email = get_jwt_identity()
+        user = users_collection.find_one({"email": user_email})
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Delete all cars listed by the user
+        user_cars = cars_collection.find({"seller_email": user_email})
+        for car in user_cars:
+            for image_url in car.get("images", []):
+                if image_url.startswith("/uploads/"):
+                    filename = image_url.split("/")[-1]
+                    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+        cars_collection.delete_many({"seller_email": user_email})
+
+        # Delete profile picture
+        if user.get("profilePicture") and user["profilePicture"].startswith("/uploads/"):
+            filename = user["profilePicture"].split("/")[-1]
+            file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
+        # Delete the user account
+        users_collection.delete_one({"email": user_email})
+        return jsonify({"message": "Account and associated cars deleted successfully"}), 200
+    except Exception as e:
+        print(f"Error deleting account: {str(e)}")
+        return jsonify({"error": "Failed to delete account"}), 500
+
+# Car recommendation endpoint
+@app.route("/predict", methods=["POST"])
+def predict():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No input data provided"}), 400
+
+        required_fields = [
+            "Price", "Model Year", "Engine Type", "Engine Capacity",
+            "Assembly", "Body Type", "Transmission Type", "Registration Status"
+        ]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"{field} is required"}), 400
+
+        numeric_fields = ["Price", "Model Year", "Engine Capacity"]
+        for field in numeric_fields:
+            try:
+                data[field] = float(data[field])
+            except (ValueError, TypeError):
+                return jsonify({"error": f"{field} must be a number"}), 400
+
+        categorical_mappings = {
+            "Engine Type": ["Petrol", "Diesel", "Hybrid"],
+            "Assembly": ["Local", "Imported"],
+            "Body Type": ["Hatchback", "Sedan", "SUV", "Cross Over", "Van", "Mini Van"],
+            "Transmission Type": ["Manual", "Automatic"],
+            "Registration Status": ["Registered", "Un-Registered"]
+        }
+
+        encoded_data = data.copy()
+        for col, categories in categorical_mappings.items():
+            try:
+                encoded_data[col] = categories.index(data[col])
+            except ValueError:
+                return jsonify({"error": f"Invalid value for {col}. Expected one of: {categories}"}), 400
+
+        input_df = pd.DataFrame([encoded_data], columns=required_fields)
+        prediction = model.predict(input_df)[0]
+        car_name = car_name_encoder.inverse_transform([prediction])[0]
+
+        return jsonify({"car_name": car_name}), 200
+    except Exception as e:
+        print(f"Prediction error: {str(e)}")
+        return jsonify({"error": "Prediction failed. Please try again."}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
