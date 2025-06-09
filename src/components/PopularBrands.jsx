@@ -52,7 +52,7 @@ const PopularBrands = () => {
 
         <div className="brands-grid">
           {brands.map((brand, index) => (
-            <div key={index} className="brand-card" style={{ animationDelay: `${index * 0.3}s` }}>
+            <div key={index} className="brand-card" style={{ animationDelay: `${index * 0.4}s` }}>
               <div className={`brand-badge ${brand.shape}`}>
                 <div className="badge-content">
                   <div className="brand-logo-container">
