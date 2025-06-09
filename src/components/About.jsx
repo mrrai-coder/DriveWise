@@ -3,7 +3,8 @@
 import { useNavigate } from "react-router-dom"
 import Header from "./Header"
 import Footer from "./Footer"
-import Man1_pic from "../images/Testimonials/Male1.png" // Fixed empty import
+import AnimatedCounter from "./AnimatedCounter"
+import Man1_pic from "../images/Testimonials/Male1.png"
 import Man2_pic from "../images/Testimonials/Male2.png"
 import Man3_pic from "../images/Testimonials/Male3.png"
 import About_team_pic from "../images/Testimonials/About_team_pic.jpg"
@@ -23,12 +24,36 @@ const About = () => {
     window.scrollTo(0, 0)
   }
 
-  // Company stats
+  // Company stats with animation data and unique IDs
   const stats = [
-    { id: 1, value: "10,000+", label: "Cars Listed" },
-    { id: 2, value: "5,000+", label: "Happy Customers" },
-    { id: 3, value: "500+", label: "Verified Dealers" },
-    { id: 4, value: "50+", label: "Cities Covered" },
+    {
+      id: "cars-listed",
+      value: 10000,
+      suffix: "+",
+      label: "Cars Listed",
+      duration: 2500,
+    },
+    {
+      id: "happy-customers",
+      value: 5000,
+      suffix: "+",
+      label: "Happy Customers",
+      duration: 2200,
+    },
+    {
+      id: "verified-dealers",
+      value: 500,
+      suffix: "+",
+      label: "Verified Dealers",
+      duration: 1800,
+    },
+    {
+      id: "cities-covered",
+      value: 50,
+      suffix: "+",
+      label: "Cities Covered",
+      duration: 1500,
+    },
   ]
 
   // Team members
@@ -91,6 +116,14 @@ const About = () => {
     },
   ]
 
+  // Function to reset counter animations (for development/testing)
+  const resetCounters = () => {
+    stats.forEach((stat) => {
+      sessionStorage.removeItem(`counter_animated_${stat.id}`)
+    })
+    window.location.reload()
+  }
+
   return (
     <div className="site-wrapper">
       <Header navigate={handleNavigation} />
@@ -138,17 +171,27 @@ const About = () => {
           </div>
         </section>
 
-        {/* Stats Section */}
+        {/* Animated Stats Section */}
         <section className="about-stats-section">
           <div className="container">
             <div className="stats-grid">
               {stats.map((stat) => (
                 <div key={stat.id} className="stat-card">
-                  <div className="stat-value">{stat.value}</div>
+                  <div className="stat-value">
+                    <AnimatedCounter
+                      id={stat.id}
+                      end={stat.value}
+                      suffix={stat.suffix}
+                      duration={stat.duration}
+                      separator=","
+                    />
+                  </div>
                   <div className="stat-label">{stat.label}</div>
                 </div>
               ))}
             </div>
+
+            
           </div>
         </section>
 
