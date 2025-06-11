@@ -1,11 +1,13 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../AuthContext";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import axios from "axios";
 
-const CarRecommendationPage = ({ navigate }) => {
+const CarRecommendationPage = () => {
   const { token } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     Price: "",
     "Model Year": "",
@@ -72,7 +74,7 @@ const CarRecommendationPage = ({ navigate }) => {
       console.error("Error:", err.response?.data || err.message);
       if (err.response?.status === 401) {
         setError("Session expired. Please log in again.");
-        navigate("home");
+        navigate("/"); // Updated to navigate to root route
       } else {
         setError(err.response?.data?.error || "Error fetching recommendation. Please try again.");
       }
@@ -233,7 +235,7 @@ const CarRecommendationPage = ({ navigate }) => {
           <div className="text-center" style={{ marginTop: "2rem" }}>
             <button
               className="btn btn-outline"
-              onClick={() => navigate("home")}
+              onClick={() => navigate("/")} // Updated to navigate to root route
             >
               Back to Home
             </button>

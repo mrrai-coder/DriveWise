@@ -2565,3 +2565,178 @@ ul {
   height: 90px;
   object-fit: contain;
 }
+
+/* No Scroll Form Modal */
+.no-scroll-form {
+  max-width: 450px;
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 6px 20px var(--shadow-light);
+  min-height: fit-content;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Modal Body */
+.modal-body {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Form Layout */
+.form-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 400px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Form Group */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.form-group input {
+  padding: 0.4rem;
+  font-size: 0.85rem;
+  border-radius: 0.375rem;
+}
+
+/* Form Options */
+.form-options {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
+}
+
+.form-options .remember-me {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+/* Form Actions */
+.form-actions {
+  text-align: center;
+  margin-top: 0.4rem;
+}
+
+.form-actions .btn-primary {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 0.375rem;
+}
+
+/* API Error */
+.api-error {
+  display: block;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  padding: 0.4rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--error);
+  border-radius: 0.25rem;
+}
+
+/* Login Link */
+.login-link {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  text-align: center;
+}
+/* Add to :root in App.css */
+:root {
+  --success-green: #22c55e; /* New success color */
+}
+
+/* Success Modal Styles */
+.success-modal-container {
+  background-color: var(--white);
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 6px 25px var(--shadow-light);
+  animation: slideIn 0.3s ease-out;
+  border: 1px solid var(--border-neutral);
+  padding: 2rem;
+  text-align: center;
+}
+
+.success-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.success-icon {
+  font-size: 3rem;
+  color: var(--success-green);
+  animation: bounceIn 0.5s ease-out;
+}
+
+.success-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.success-message {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.success-button {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  transition: transform 0.2s ease, background-color 0.3s;
+}
+
+.success-button:hover {
+  transform: translateY(-2px);
+  background-color: var(--primary-dark);
+}
+
+/* Animations */
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

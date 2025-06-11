@@ -13,6 +13,19 @@ const Header = () => {
   const [signupFormOpen, setSignupFormOpen] = useState(false)
   const [loginFormOpen, setLoginFormOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"))
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+
+  useEffect(() => {
+    console.log("useNavigate in Header:", typeof navigate)
+  }, [navigate])
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
 
   const openSignupForm = () => {
     setSignupFormOpen(true)
@@ -35,9 +48,9 @@ const Header = () => {
     window.scrollTo(0, 0)
   }
 
-  // Navigation handler function
   const handleNavigation = (page, e) => {
     e.preventDefault()
+    console.log("Navigating to:", page)
     navigate(`/${page === "home" ? "" : page}`)
     setMobileMenuOpen(false)
     window.scrollTo(0, 0)
@@ -45,77 +58,84 @@ const Header = () => {
 
   return (
     <>
-      {/* Main Navigation */}
       <header className="main-header">
         <div className="container flex-between">
-          {/* Logo with home link */}
           <a href="#" onClick={(e) => handleNavigation("home", e)} className="logo">
             <img src={logo || "/placeholder.svg"} alt="Drive Wise logo" />
           </a>
 
-          {/* Mobile menu button */}
           <button className="mobile-menu-btn mobile-only" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <i className="fa fa-times"></i> : <i className="fa fa-bars"></i>}
           </button>
 
-          {/* Desktop Navigation */}
-          <nav className="desktop-nav desktop-only">
-            <a href="#" onClick={(e) => handleNavigation("home", e)} className="nav-link">
-              Home
-            </a>
-            <a href="#" onClick={(e) => handleNavigation("all-cars", e)} className="nav-link">
-              All Cars
-            </a>
-            <a href="#" onClick={(e) => handleNavigation("sell-car", e)} className="nav-link">
-              Sell Car
-            </a>
-            <a href="#" onClick={(e) => handleNavigation("recommend", e)} className="nav-link">
-              Car Recommendation
-            </a>
-            <a href="#" onClick={(e) => handleNavigation("about", e)} className="nav-link">
-              About Us
-            </a>
-            {isLoggedIn && (
-              <a href="#" onClick={(e) => handleNavigation("profile", e)} className="nav-link">
-                Profile
+          {!isMobile && (
+            <nav className="desktop-nav desktop-only">
+              <a href="#" onClick={(e) => handleNavigation("home", e)} className="nav-link">
+                Home
               </a>
-            )}
-          </nav>
+              {isLoggedIn && (
+                <>
+                  <a href="#" onClick={(e) => handleNavigation("all-cars", e)} className="nav-link">
+                    All Cars
+                  </a>
+                  <a href="#" onClick={(e) => handleNavigation("sell-car", e)} className="nav-link">
+                    Sell Car
+                  </a>
+                  <a href="#" onClick={(e) => handleNavigation("recommend", e)} className="nav-link">
+                    Car Recommendation
+                  </a>
+                </>
+              )}
+              <a href="#" onClick={(e) => handleNavigation("about", e)} className="nav-link">
+                About Us
+              </a>
+              {isLoggedIn && (
+                <a href="#" onClick={(e) => handleNavigation("profile", e)} className="nav-link">
+                  Profile
+                </a>
+              )}
+            </nav>
+          )}
 
-          <div className="auth-buttons desktop-only">
-            {isLoggedIn ? (
-              <button className="btn btn-primary" onClick={handleLogout}>
-                <i className="fa fa-sign-out"></i> Log Out
-              </button>
-            ) : (
-              <>
-                <button id="signup-btn" className="btn btn-primary" onClick={openSignupForm}>
-                  <i className="fa fa-user"></i> Sign Up
+          {!isMobile && (
+            <div className="auth-buttons desktop-only">
+              {isLoggedIn ? (
+                <button className="btn btn-primary" onClick={handleLogout}>
+                  <i className="fa fa-sign-out"></i> Log Out
                 </button>
-                <button id="login-btn" className="btn btn-outline" onClick={openLoginForm}>
-                  <i className="fa fa-sign-in"></i> Log In
-                </button>
-              </>
-            )}
-          </div>
+              ) : (
+                <>
+                  <button id="signup-btn" className="btn btn-primary" onClick={openSignupForm}>
+                    <i className="fa fa-user"></i> Sign Up
+                  </button>
+                  <button id="login-btn" className="btn btn-outline" onClick={openLoginForm}>
+                    <i className="fa fa-sign-in"></i> Log In
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="mobile-nav">
             <nav>
               <a href="#" onClick={(e) => handleNavigation("home", e)} className="nav-link">
                 Home
               </a>
-              <a href="#" onClick={(e) => handleNavigation("all-cars", e)} className="nav-link">
-                All Cars
-              </a>
-              <a href="#" onClick={(e) => handleNavigation("sell-car", e)} className="nav-link">
-                Sell Car
-              </a>
-              <a href="#" onClick={(e) => handleNavigation("recommend", e)} className="nav-link">
-                Car Recommendation
-              </a>
+              {isLoggedIn && (
+                <>
+                  <a href="#" onClick={(e) => handleNavigation("all-cars", e)} className="nav-link">
+                    All Cars
+                  </a>
+                  <a href="#" onClick={(e) => handleNavigation("sell-car", e)} className="nav-link">
+                    Sell Car
+                  </a>
+                  <a href="#" onClick={(e) => handleNavigation("recommend", e)} className="nav-link">
+                    Car Recommendation
+                  </a>
+                </>
+              )}
               <a href="#" onClick={(e) => handleNavigation("about", e)} className="nav-link">
                 About Us
               </a>
@@ -155,7 +175,6 @@ const Header = () => {
         )}
       </header>
 
-      {/* Auth Forms */}
       <SignupForm isOpen={signupFormOpen} onClose={() => setSignupFormOpen(false)} openLogin={openLoginForm} />
       <LoginForm
         isOpen={loginFormOpen}

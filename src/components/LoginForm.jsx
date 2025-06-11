@@ -3,6 +3,7 @@
 import { useState } from "react"
 import axios from "axios"
 import { toast } from "react-toastify"
+import SuccessModal from "./SuccessModal"
 
 const LoginForm = ({ isOpen, onClose, openSignup, onLoginSuccess }) => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ const LoginForm = ({ isOpen, onClose, openSignup, onLoginSuccess }) => {
   })
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -50,120 +52,113 @@ const LoginForm = ({ isOpen, onClose, openSignup, onLoginSuccess }) => {
           password: formData.password,
         })
 
-        // Store JWT token in localStorage
         localStorage.setItem("token", response.data.token)
-
-        // Show success toast
-        toast.success("Successfully logged in!", {
-          position: "top-right",
-          autoClose: 3000,
-        })
-
-        // Notify parent component of successful login
-        onLoginSuccess()
-
-        // Reset form and close
-        setFormData({
-          email: "",
-          password: "",
-          rememberMe: false,
-        })
+        setFormData({ email: "", password: "", rememberMe: false })
         setIsSubmitting(false)
-        onClose()
+        setShowSuccess(true)
+        onLoginSuccess()
       } catch (error) {
         setIsSubmitting(false)
         const errorMessage =
           error.response?.data?.error || "Login failed. Please try again."
         setErrors({ api: errorMessage })
-        toast.error(errorMessage, {
-          position: "top-right",
-          autoClose: 3000,
-        })
+        toast.error(errorMessage, { position: "top-right", autoClose: 3000 })
       }
     } else {
       setErrors(newErrors)
     }
   }
 
+  const handleSuccessClose = () => {
+    setShowSuccess(false)
+    onClose()
+  }
+
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-container">
-        <div className="modal-header">
-          <h2>Log In to Your Account</h2>
-          <button className="close-btn" onClick={onClose}>
-            <i className="fa fa-times"></i>
-          </button>
-        </div>
-        <div className="modal-body">
-          {errors.api && <span className="error-message">{errors.api}</span>}
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={errors.email ? "error" : ""}
-              />
-              {errors.email && <span className="error-message">{errors.email}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className={errors.password ? "error" : ""}
-              />
-              {errors.password && <span className="error-message">{errors.password}</span>}
-            </div>
-
-            <div className="form-group remember-forgot">
-              <div className="remember-me">
+    <>
+      <div className="modal-overlay">
+        <div className="modal-container balanced-form">
+          <div className="modal-header">
+            <h2>Log In</h2>
+            <button className="close-btn" onClick={onClose} aria-label="Close">
+              <i className="fa fa-times"></i>
+            </button>
+          </div>
+          <div className="modal-body">
+            {errors.api && <span className="error-message api-error">{errors.api}</span>}
+            <form onSubmit={handleSubmit} className="form-layout">
+              <div className="form-group">
+                <label htmlFor="email">Email</label>
                 <input
-                  type="checkbox"
-                  id="rememberMe"
-                  name="rememberMe"
-                  checked={formData.rememberMe}
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleChange}
+                  className={errors.email ? "error" : ""}
+                  placeholder="Enter your email"
                 />
-                <label htmlFor="rememberMe">Remember me</label>
+                {errors.email && <span className="error-message">{errors.email}</span>}
               </div>
-              <a href="#" className="forgot-password">
-                Forgot password?
-              </a>
-            </div>
 
-            <div className="form-group">
-              <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                {isSubmitting ? <i className="fa fa-spinner fa-spin"></i> : "Log In"}
-              </button>
-            </div>
-          </form>
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={errors.password ? "error" : ""}
+                  placeholder="Enter your password"
+                />
+                {errors.password && <span className="error-message">{errors.password}</span>}
+              </div>
 
-          <div className="login-link">
-            Don't have an account?{" "}
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault()
-                onClose()
-                openSignup()
-              }}
-            >
-              Sign Up
-            </a>
+              <div className="form-options">
+                <div className="remember-me">
+                  <input
+                    type="checkbox"
+                    id="rememberMe"
+                    name="rememberMe"
+                    checked={formData.rememberMe}
+                    onChange={handleChange}
+                  />
+                  <label htmlFor="rememberMe">Remember me</label>
+                </div>
+                <a href="#" className="forgot-password">
+                  Forgot password?
+                </a>
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? <i className="fa fa-spinner fa-spin"></i> : "Log In"}
+                </button>
+              </div>
+            </form>
+
+            <div className="login-link text-center">
+              No account? <a href="#" onClick={(e) => { e.preventDefault(); onClose(); openSignup(); }}>Sign Up</a>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      <SuccessModal
+        isOpen={showSuccess}
+        onClose={handleSuccessClose}
+        title="Login Successful!"
+        message="Welcome back! You're now logged in and ready to explore."
+        buttonText="Continue"
+        onButtonClick={handleSuccessClose}
+      />
+    </>
   )
 }
 
