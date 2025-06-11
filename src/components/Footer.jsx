@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import logo from "../images/logo51.png"
 import logo1 from "../logos/facebook-logo-20.png"
 import logo2 from "../logos/instagram-logo-20.png"
@@ -11,42 +12,25 @@ const Footer = () => {
         <div className="footer-grid">
           <div className="footer-column">
             <img src={logo || "/placeholder.svg"} alt="Drive Wise logo" />
-            {/* <p className="footer-description">
-              Pakistan's premier online platform for buying and selling cars. Get the best value for your vehicle.
-            </p> */}
-            <div className="footer-social">
-              <a href="#" aria-label="Facebook">
-                <img src={logo1 || "/placeholder.svg"} alt="Facebook logo" className="social-logo" />
-              </a>
-              <a href="#" aria-label="Instagram">
-                <img src={logo2 || "/placeholder.svg"} alt="instagram logo" className="social-logo" />
-              </a>
-              <a href="#" aria-label="Twitter">
-                <img src={logo4 || "/placeholder.svg"} alt="Twitter logo" className="social-logo" />
-              </a>
-              <a href="#" aria-label="Youtube">
-                <img src={logo3 || "/placeholder.svg"} alt="Youtube logo" className="social-logo" />
-              </a>
-            </div>
           </div>
 
           <div className="footer-column">
             <h3 className="footer-title">Quick Links</h3>
             <ul className="footer-links">
               <li>
-                <a href="#">About Us</a>
+                <Link to="/about">About Us</Link>
               </li>
               <li>
-                <a href="#">How It Works</a>
+                <Link to="/about">How It Works</Link>
               </li>
               <li>
-                <a href="#">Car Valuation</a>
+                <Link to="/about">Car Valuation</Link>
               </li>
               <li>
-                <a href="#">Car Financing</a>
+                <Link to="/about">Car Financing</Link>
               </li>
               <li>
-                <a href="#">FAQs</a>
+                <Link to="/about">FAQs</Link>
               </li>
             </ul>
           </div>
@@ -88,15 +72,28 @@ const Footer = () => {
                 <span>info@drivewise.com</span>
               </li>
             </ul>
+            <div className="footer-social">
+              <a href="#" aria-label="Facebook">
+                <img src={logo1 || "/placeholder.svg"} alt="Facebook logo" className="social-logo" />
+              </a>
+              <a href="#" aria-label="Instagram">
+                <img src={logo2 || "/placeholder.svg"} alt="Instagram logo" className="social-logo" />
+              </a>
+              <a href="#" aria-label="Twitter">
+                <img src={logo4 || "/placeholder.svg"} alt="Twitter logo" className="social-logo" />
+              </a>
+              <a href="#" aria-label="Youtube">
+                <img src={logo3 || "/placeholder.svg"} alt="Youtube logo" className="social-logo" />
+              </a>
+            </div>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <p className="copyright">&copy; {new Date().getFullYear()} Drive Wise. All rights reserved.</p>
+          <p className="copyright">© {new Date().getFullYear()} Drive Wise. All rights reserved.</p>
           <div className="footer-legal">
             <a href="#">Privacy Policy</a>
             <a href="#">Terms of Service</a>
-            <a href="#">Sitemap</a>
           </div>
         </div>
       </div>

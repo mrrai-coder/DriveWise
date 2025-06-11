@@ -1163,7 +1163,9 @@ ul {
 
 .footer-social {
   display: flex;
-  gap: 1rem;
+  gap: 1.2rem;
+  padding-top: 20px;
+  /* padding-left: 20px; */
 }
 
 .footer-social a:hover {
@@ -1202,10 +1204,10 @@ ul {
   gap: 0.75rem;
 }
 
-.footer-contact li {
+/* .footer-contact li {
   display: flex;
   align-items: flex-start;
-}
+} */
 
 .contact-icon {
   color: var(--primary);
@@ -1577,6 +1579,7 @@ ul {
 .auth-buttons {
   display: flex;
   gap: 0.75rem;
+  padding-bottom: 14px;
 }
 
 .mobile-login {
@@ -1694,7 +1697,7 @@ ul {
 
 .sort-container label {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  white-space: nowrap;
   font-weight: 500;
 }
 
