@@ -9,26 +9,11 @@ const AnimatedCounter = ({
   prefix = "",
   separator = ",",
   decimals = 0,
-
-  id, // Unique identifier for this counter
-
 }) => {
   const [count, setCount] = useState(0)
   const counterRef = useRef(null)
   const hasAnimated = useRef(false)
   const animationFrameRef = useRef(null)
-
-  // Check if this counter has already been animated in this session
-  useEffect(() => {
-    if (typeof window !== "undefined" && id) {
-      const animatedKey = `counter_animated_${id}`
-      const wasAnimated = sessionStorage.getItem(animatedKey)
-      if (wasAnimated) {
-        hasAnimated.current = true
-        setCount(end)
-      }
-    }
-  }, [id, end])
 
   const animateCounter = useCallback(() => {
     if (hasAnimated.current) return
@@ -51,36 +36,18 @@ const AnimatedCounter = ({
       if (progress < 1) {
         animationFrameRef.current = requestAnimationFrame(animate)
       } else {
-        // Animation completed
         setCount(end)
-        if (typeof window !== "undefined" && id) {
-          const animatedKey = `counter_animated_${id}`
-          sessionStorage.setItem(animatedKey, "true")
-        }
-
-        setCount(end)
-
       }
     }
 
     animationFrameRef.current = requestAnimationFrame(animate)
-  }, [end, duration, id])
-
-  useEffect(() => {
-    if (hasAnimated.current) return
-
-
   }, [end, duration])
 
   useEffect(() => {
-
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries
         if (entry.isIntersecting && !hasAnimated.current) {
-
-          // Add a small delay to make the animation more noticeable
-
           setTimeout(() => {
             animateCounter()
           }, 200)
