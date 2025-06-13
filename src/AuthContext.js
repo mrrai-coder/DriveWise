@@ -9,14 +9,14 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      setUser({ email: "user@example.com" }); // Placeholder; replace with actual user data
+      setUser({ email: "user@example.com" }); 
     }
   }, [token]);
 
   const login = (newToken) => {
     setToken(newToken);
     localStorage.setItem("token", newToken);
-    setUser({ email: "user@example.com" }); // Update with actual user data
+    setUser({ email: "user@example.com" }); 
   };
 
   const logout = () => {

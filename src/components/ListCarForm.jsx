@@ -3,7 +3,7 @@
 import { useState } from "react"
 import axios from "axios"
 import Toast from "./Toast"
-import "./AuthForms.css" // Updated CSS import
+import "./AuthForms.css"
 
 const ListCarForm = ({ isOpen, onClose, onCarListed }) => {
   const [formData, setFormData] = useState({

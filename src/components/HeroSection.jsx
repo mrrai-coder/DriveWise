@@ -40,7 +40,7 @@ const HeroSection = ({ navigate }) => {
         reactNavigate(navigateTo);
       }
       window.scrollTo(0, 0);
-      setShowSearchInput(false); // Hide input after submission
+      setShowSearchInput(false); 
       setSearchName("");
     } catch (err) {
       setError("Failed to initiate search. Please try again.");

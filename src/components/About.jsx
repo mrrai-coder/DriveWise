@@ -12,7 +12,6 @@ import About_team_pic from "../images/Testimonials/About_team_pic.jpg"
 const About = () => {
   const navigate = useNavigate()
 
-  // Navigation function
   const handleNavigation = (page) => {
     if (page === "home") {
       navigate("/")
@@ -24,7 +23,7 @@ const About = () => {
     window.scrollTo(0, 0)
   }
 
-  // Company stats with animation data and unique IDs
+  
   const stats = [
     {
       id: "cars-listed",
@@ -56,7 +55,6 @@ const About = () => {
     },
   ]
 
-  // Team members
   const team = [
     {
       id: 1,
@@ -88,7 +86,6 @@ const About = () => {
     },
   ]
 
-  // Core values
   const values = [
     {
       id: 1,
@@ -116,7 +113,7 @@ const About = () => {
     },
   ]
 
-  // Function to reset counter animations (for development/testing)
+  
   const resetCounters = () => {
     stats.forEach((stat) => {
       sessionStorage.removeItem(`counter_animated_${stat.id}`)

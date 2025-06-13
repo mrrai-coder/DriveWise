@@ -24,7 +24,7 @@ const PopularCategories = () => {
       try {
         const response = await axios.get("http://localhost:5000/api/categories")
         const backendCategories = response.data
-        // Map backend data to frontend categories with styles
+        
         const formattedCategories = Object.keys(categoryStyles).map((name, index) => {
           const backendCategory = backendCategories.find((c) => c.name === name)
           return {

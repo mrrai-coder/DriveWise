@@ -180,23 +180,22 @@
   width: 100%;
   justify-content: center;
 }
-/* Existing styles in AuthForms.css assumed to be unchanged */
-/* Add the following for the profile icon */
+
 .nav-link.profile-icon {
-  font-size: 1.2rem; /* Adjust icon size */
-  padding: 0.5rem; /* Consistent padding with other nav links */
+  font-size: 1.2rem; 
+  padding: 0.5rem; 
   display: flex;
   align-items: center;
   transition: color 0.3s ease;
 }
 
 .nav-link.profile-icon:hover {
-  color: #007bff; /* Match primary button color or your theme's hover color */
-}
+  color: #007bff;
+} 
 
-/* For mobile menu, ensure icon and text align nicely */
+
 .mobile-nav .nav-link.profile-icon {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* Space between icon and text */
+  gap: 0.5rem; 
 }
