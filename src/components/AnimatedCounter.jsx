@@ -9,11 +9,27 @@ const AnimatedCounter = ({
   prefix = "",
   separator = ",",
   decimals = 0,
+
+  id,
+
 }) => {
   const [count, setCount] = useState(0)
   const counterRef = useRef(null)
   const hasAnimated = useRef(false)
   const animationFrameRef = useRef(null)
+
+  
+  useEffect(() => {
+    if (typeof window !== "undefined" && id) {
+      const animatedKey = `counter_animated_${id}`
+      const wasAnimated = sessionStorage.getItem(animatedKey)
+      if (wasAnimated) {
+        hasAnimated.current = true
+        setCount(end)
+      }
+    }
+  }, [id, end])
+
 
   const animateCounter = useCallback(() => {
     if (hasAnimated.current) return
@@ -27,7 +43,7 @@ const AnimatedCounter = ({
       const elapsed = timestamp - startTime
       const progress = Math.min(elapsed / duration, 1)
 
-      // Smoother easing function
+      
       const easeOutCubic = 1 - Math.pow(1 - progress, 3)
       const currentCount = Math.floor(easeOutCubic * (end - startValue) + startValue)
 
@@ -36,6 +52,7 @@ const AnimatedCounter = ({
       if (progress < 1) {
         animationFrameRef.current = requestAnimationFrame(animate)
       } else {
+
         setCount(end)
       }
     }
@@ -48,6 +65,7 @@ const AnimatedCounter = ({
       (entries) => {
         const [entry] = entries
         if (entry.isIntersecting && !hasAnimated.current) {
+          
           setTimeout(() => {
             animateCounter()
           }, 200)
