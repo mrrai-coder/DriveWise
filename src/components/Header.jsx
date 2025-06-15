@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -14,6 +15,7 @@ const Header = () => {
   const [loginFormOpen, setLoginFormOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"))
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
 
   useEffect(() => {
     console.log("useNavigate in Header:", typeof navigate)
@@ -41,9 +43,18 @@ const Header = () => {
     setIsLoggedIn(true)
   }
 
+  const openLogoutConfirm = () => {
+    setLogoutConfirmOpen(true)
+  }
+
+  const closeLogoutConfirm = () => {
+    setLogoutConfirmOpen(false)
+  }
+
   const handleLogout = () => {
     localStorage.removeItem("token")
     setIsLoggedIn(false)
+    setLogoutConfirmOpen(false)
     navigate("/")
     window.scrollTo(0, 0)
   }
@@ -100,7 +111,7 @@ const Header = () => {
           {!isMobile && (
             <div className="auth-buttons desktop-only">
               {isLoggedIn ? (
-                <button className="btn btn-primary" onClick={handleLogout}>
+                <button className="btn btn-primary" onClick={openLogoutConfirm}>
                   <i className="fa fa-sign-out"></i> Log Out
                 </button>
               ) : (
@@ -145,7 +156,7 @@ const Header = () => {
                 </a>
               )}
               {isLoggedIn ? (
-                <button className="btn btn-primary mobile-logout" onClick={handleLogout}>
+                <button className="btn btn-primary mobile-logout" onClick={openLogoutConfirm}>
                   <i className="fa fa-sign-out"></i> Log Out
                 </button>
               ) : (
@@ -182,6 +193,32 @@ const Header = () => {
         openSignup={openSignupForm}
         onLoginSuccess={handleLoginSuccess}
       />
+
+      {logoutConfirmOpen && (
+        <div className="modal-overlay">
+          <div className="modal-container no-scroll-form">
+            <div className="modal-header">
+              <h2>Confirm Logout</h2>
+              <button className="close-btn" onClick={closeLogoutConfirm}>
+                &times;
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="text-center" style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                Are you sure you want to log out?
+              </p>
+              <div className="form-actions" style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                <button className="btn btn-outline" onClick={closeLogoutConfirm}>
+                  Cancel
+                </button>
+                <button className="btn btn-primary" onClick={handleLogout}>
+                  Log Out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

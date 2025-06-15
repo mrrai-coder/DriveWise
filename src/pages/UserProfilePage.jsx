@@ -1,8 +1,10 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
 import axios from "axios"
-import { toast } from "react-toastify"
+import { ToastContainer, toast } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 import { useNavigate } from "react-router-dom"
 import Header from "../components/Header"
 import Footer from "../components/Footer"
@@ -15,6 +17,9 @@ const UserProfilePage = () => {
   const [editCarOpen, setEditCarOpen] = useState(null)
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const [confirmSaveOpen, setConfirmSaveOpen] = useState(false)
+  const [confirmEditCarOpen, setConfirmEditCarOpen] = useState(null)
+  const [confirmDeleteCarOpen, setConfirmDeleteCarOpen] = useState(null)
+  const [confirmDeleteAccountOpen, setConfirmDeleteAccountOpen] = useState(false)
   const [contactNumber, setContactNumber] = useState("")
   const [fullName, setFullName] = useState("")
   const [profilePicture, setProfilePicture] = useState(null)
@@ -50,7 +55,6 @@ const UserProfilePage = () => {
         const response = await axios.get(`${BASE_URL}/api/user-profile`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-        console.log("Fetched user data:", response.data) // Log for debugging
         setUserData(response.data)
         setContactNumber(response.data.contactNumber || "")
         setFullName(response.data.fullName || "")
@@ -131,21 +135,42 @@ const UserProfilePage = () => {
 
   const handleEditCar = async (carId) => {
     try {
-      if (carForm.price && isNaN(carForm.price)) {
-        toast.error("Price must be a valid number", {
+      const parsedCarForm = {
+        name: carForm.name || undefined,
+        location: carForm.location || undefined,
+        price: carForm.price ? parseFloat(carForm.price) : undefined,
+        year: carForm.year ? parseInt(carForm.year, 10) : undefined,
+        mileage: carForm.mileage ? parseInt(carForm.mileage, 10) : undefined,
+        fuel: carForm.fuel || undefined,
+        transmission: carForm.transmission || undefined,
+        category: carForm.category || undefined,
+        make: carForm.make || undefined,
+        model: carForm.model || undefined,
+        featured: carForm.featured !== undefined ? carForm.featured : undefined,
+        newImages: carForm.newImages || undefined,
+      }
+
+      console.log("Parsed carForm:", parsedCarForm)
+
+      // Validate numeric fields
+      if (parsedCarForm.price && (isNaN(parsedCarForm.price) || parsedCarForm.price <= 0)) {
+        toast.error("Price must be a valid positive number", {
           position: "top-right",
           autoClose: 3000,
         })
         return
       }
-      if (carForm.year && (isNaN(carForm.year) || carForm.year < 1900 || carForm.year > new Date().getFullYear())) {
-        toast.error("Year must be a valid number between 1900 and current year", {
+      if (
+        parsedCarForm.year &&
+        (isNaN(parsedCarForm.year) || parsedCarForm.year < 1900 || parsedCarForm.year > new Date().getFullYear())
+      ) {
+        toast.error(`Year must be between 1900 and ${new Date().getFullYear()}`, {
           position: "top-right",
           autoClose: 3000,
         })
         return
       }
-      if (carForm.mileage && (isNaN(carForm.mileage) || carForm.mileage < 0)) {
+      if (parsedCarForm.mileage && (isNaN(parsedCarForm.mileage) || parsedCarForm.mileage < 0)) {
         toast.error("Mileage must be a valid non-negative number", {
           position: "top-right",
           autoClose: 3000,
@@ -153,16 +178,32 @@ const UserProfilePage = () => {
         return
       }
 
-      const token = localStorage.getItem("token")
-      const formData = new FormData()
-      for (const key in carForm) {
-        if (carForm[key] && key !== "newImages") formData.append(key, carForm[key])
-      }
-      if (carForm.newImages) {
-        carForm.newImages.forEach((file) => formData.append("images", file))
+      // Validate file sizes for new images
+      if (parsedCarForm.newImages) {
+        const maxFileSize = 5 * 1024 * 1024 // 5MB
+        for (const file of parsedCarForm.newImages) {
+          if (file.size > maxFileSize) {
+            toast.error(`File ${file.name} exceeds 5MB limit`, {
+              position: "top-right",
+              autoClose: 3000,
+            })
+            return
+          }
+          if (!["image/png", "image/jpeg", "image/gif"].includes(file.type)) {
+            toast.error(`Invalid file type for ${file.name}. Allowed: jpg, jpeg, png, gif`, {
+              position: "top-right",
+              autoClose: 3000,
+            })
+            return
+          }
+        }
       }
 
-      if (!Object.keys(carForm).length) {
+      // Check if at least one field is provided
+      const validFields = Object.keys(parsedCarForm).filter(
+        (key) => parsedCarForm[key] !== undefined && (key !== "newImages" || parsedCarForm.newImages?.length > 0)
+      )
+      if (validFields.length === 0) {
         toast.error("Please provide at least one field to update", {
           position: "top-right",
           autoClose: 3000,
@@ -170,20 +211,55 @@ const UserProfilePage = () => {
         return
       }
 
-      await axios.put(`${BASE_URL}/api/update-car/${carId}`, formData, {
+      setConfirmEditCarOpen(carId)
+    } catch (error) {
+      console.error("Validation error:", error)
+      toast.error(error.message || "Failed to validate car data", {
+        position: "top-right",
+        autoClose: 3000,
+      })
+    }
+  }
+
+  const confirmEditCar = async (carId) => {
+    try {
+      const token = localStorage.getItem("token")
+      const formData = new FormData()
+      // Exclude 'id' and '_id' from formData
+      const excludedFields = ['id', '_id']
+      for (const key in carForm) {
+        if (!excludedFields.includes(key) && carForm[key] !== undefined && key !== "newImages" && carForm[key] !== "") {
+          formData.append(key, carForm[key])
+        }
+      }
+      if (carForm.newImages && carForm.newImages.length > 0) {
+        carForm.newImages.forEach((file) => formData.append("images", file))
+      }
+
+      // Log FormData contents
+      console.log("FormData entries for car update:")
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value instanceof File ? value.name : value}`)
+      }
+
+      const response = await axios.put(`${BASE_URL}/api/update-car/${carId}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       })
+
+      // Fetch the updated car data
       const updatedCar = await axios.get(`${BASE_URL}/api/cars/${carId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
+
       setUserData({
         ...userData,
         cars: userData.cars.map((car) => (car._id === carId ? updatedCar.data : car)),
       })
       setEditCarOpen(null)
+      setConfirmEditCarOpen(null)
       setCarForm({})
       setCarImageErrors({})
       toast.success("Car updated successfully", {
@@ -191,6 +267,8 @@ const UserProfilePage = () => {
         autoClose: 3000,
       })
     } catch (error) {
+      console.error("Update car error:", error.response?.data, error.response?.status)
+      setConfirmEditCarOpen(null)
       toast.error(error.response?.data?.error || "Failed to update car", {
         position: "top-right",
         autoClose: 3000,
@@ -237,9 +315,11 @@ const UserProfilePage = () => {
     }
   }
 
-  const handleDeleteCar = async (carId) => {
-    if (!window.confirm("Are you sure you want to delete this car listing?")) return
+  const handleDeleteCar = (carId) => {
+    setConfirmDeleteCarOpen(carId)
+  }
 
+  const confirmDeleteCar = async (carId) => {
     try {
       const token = localStorage.getItem("token")
       await axios.delete(`${BASE_URL}/api/delete-car/${carId}`, {
@@ -250,11 +330,13 @@ const UserProfilePage = () => {
         cars: userData.cars.filter((car) => car._id !== carId),
       })
       setCarImageErrors({})
+      setConfirmDeleteCarOpen(null)
       toast.success("Car deleted successfully", {
         position: "top-right",
         autoClose: 3000,
       })
     } catch (error) {
+      setConfirmDeleteCarOpen(null)
       toast.error(error.response?.data?.error || "Failed to delete car", {
         position: "top-right",
         autoClose: 3000,
@@ -262,21 +344,25 @@ const UserProfilePage = () => {
     }
   }
 
-  const handleDeleteAccount = async () => {
-    if (!window.confirm("Are you sure you want to delete your account? This action is irreversible.")) return
+  const handleDeleteAccount = () => {
+    setConfirmDeleteAccountOpen(true)
+  }
 
+  const confirmDeleteAccount = async () => {
     try {
       const token = localStorage.getItem("token")
       await axios.delete(`${BASE_URL}/api/delete-account`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       localStorage.removeItem("token")
+      setConfirmDeleteAccountOpen(false)
       toast.success("Account deleted successfully", {
         position: "top-right",
         autoClose: 3000,
+        onClose: () => navigate("/"),
       })
-      navigate("/")
     } catch (error) {
+      setConfirmDeleteAccountOpen(false)
       toast.error(error.response?.data?.error || "Failed to delete account", {
         position: "top-right",
         autoClose: 3000,
@@ -297,7 +383,7 @@ const UserProfilePage = () => {
   }
 
   return (
-    <div className="page-wrapper">
+    <div className="site-wrapper">
       <Header />
       <main className="profile-section">
         <div className="container">
@@ -405,8 +491,7 @@ const UserProfilePage = () => {
                           <button
                             className="btn btn-primary"
                             onClick={() => {
-                              setEditCarOpen(car._id)
-                              setCarForm({
+                              const carFormData = {
                                 name: car.name,
                                 location: car.location,
                                 price: car.price,
@@ -418,7 +503,10 @@ const UserProfilePage = () => {
                                 make: car.make,
                                 model: car.model,
                                 featured: car.featured,
-                              })
+                              }
+                              console.log("Setting carForm:", carFormData)
+                              setCarForm(carFormData)
+                              setEditCarOpen(car._id)
                             }}
                           >
                             Edit Listing
@@ -442,62 +530,74 @@ const UserProfilePage = () => {
 
       {/* Edit User Modal */}
       {editUserOpen && (
-        <div className="modal">
-          <div className="modal-content">
-            <h2>Edit Profile</h2>
-            <div className="form-group">
-              <label for="fullName">Full Name</label>
-              <input
-                type="text"
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label for="contactNumber">Contact Number</label>
-              <input
-                type="tel"
-                id="contactNumber"
-                value={contactNumber}
-                onChange={(e) => setContactNumber(e.target.value)}
-                placeholder="e.g., +923001234567 or 03001234567"
-              />
-            </div>
-            <div className="form-group">
-              <label for="profilePicture">Profile Picture</label>
-              <input
-                type="file"
-                id="profilePicture"
-                accept="image/*"
-                onChange={(e) => setProfilePicture(e.target.files[0])}
-              />
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-primary" onClick={handleEditUser}>
-                Save
-              </button>
-              <button className="btn btn-outline" onClick={() => setEditUserOpen(false)}>
-                Cancel
+        <div className="modal-overlay" onClick={() => setEditUserOpen(false)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit Profile</h2>
+              <button
+                className="close-btn"
+                onClick={() => setEditUserOpen(false)}
+                title="Close"
+              >
+                ×
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirm Save Modal */}
-      {confirmSaveOpen && (
-        <div className="modal">
-          <div className="modal-content confirm-modal">
-            <h3>Are you sure?</h3>
-            <p>Do you want to save these changes to your profile?</p>
-            <div className="modal-actions">
-              <button className="btn btn-primary" onClick={confirmSaveUser}>
-                Yes, Save
-              </button>
-              <button className="btn btn-outline" onClick={() => setConfirmSaveOpen(false)}>
-                Cancel
-              </button>
+            <div className="modal-body">
+              <div className="form-group">
+                <label htmlFor="fullName">Full Name</label>
+                <input
+                  type="text"
+                  id="fullName"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="contactNumber">Contact Number</label>
+                <input
+                  type="tel"
+                  id="contactNumber"
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value)}
+                  placeholder="e.g., +923001234567 or 03001234567"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="profilePicture">Profile Picture</label>
+                <input
+                  type="file"
+                  id="profilePicture"
+                  accept="image/png,image/jpeg,image/gif"
+                  onChange={(e) => {
+                    const file = e.target.files[0]
+                    if (file) {
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast.error("Profile picture exceeds 5MB limit", {
+                          position: "top-right",
+                          autoClose: 3000,
+                        })
+                        return
+                      }
+                      if (!["image/png", "image/jpeg", "image/gif"].includes(file.type)) {
+                        toast.error("Invalid file type. Allowed: jpg, jpeg, png, gif", {
+                          position: "top-right",
+                          autoClose: 3000,
+                        })
+                        return
+                      }
+                      setProfilePicture(file)
+                    }
+                  }}
+                />
+              </div>
+              <div className="modal-actions">
+                <button className="btn btn-primary" onClick={handleEditUser}>
+                  Save
+                </button>
+                <button className="btn btn-outline" onClick={() => setEditUserOpen(false)}>
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -505,132 +605,248 @@ const UserProfilePage = () => {
 
       {/* Edit Car Modal */}
       {editCarOpen && (
-        <div className="modal">
-          <div className="modal-content">
-            <h2>Edit Car Listing</h2>
-            <div className="form-group">
-              <label for="name">Car Name</label>
-              <input
-                type="text"
-                id="name"
-                value={carForm.name || ""}
-                onChange={(e) => setCarForm({ ...carForm, name: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label for="location">Location</label>
-              <input
-                type="text"
-                id="location"
-                value={carForm.location || ""}
-                onChange={(e) => setCarForm({ ...carForm, location: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label for="price">Price (PKR)</label>
-              <input
-                type="number"
-                id="price"
-                value={carForm.price || ""}
-                onChange={(e) => setCarForm({ ...carForm, price: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label for="year">Year</label>
-              <input
-                type="number"
-                id="year"
-                value={carForm.year || ""}
-                onChange={(e) => setCarForm({ ...carForm, year: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label for="mileage">Mileage (km)</label>
-              <input
-                type="number"
-                id="mileage"
-                value={carForm.mileage || ""}
-                onChange={(e) => setCarForm({ ...carForm, mileage: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label for="fuel">Fuel Type</label>
-              <select
-                id="fuel"
-                value={carForm.fuel || ""}
-                onChange={(e) => setCarForm({ ...carForm, fuel: e.target.value })}
+        <div className="modal-overlay" onClick={() => setEditCarOpen(null)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit Car Listing</h2>
+              <button
+                className="close-btn"
+                onClick={() => setEditCarOpen(null)}
+                title="Close"
               >
-                <option value="">Select Fuel Type</option>
-                <option value="Petrol">Petrol</option>
-                <option value="Diesel">Diesel</option>
-                <option value="Hybrid">Hybrid</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label for="transmission">Transmission</label>
-              <select
-                id="transmission"
-                value={carForm.transmission || ""}
-                onChange={(e) => setCarForm({ ...carForm, transmission: e.target.value })}
-              >
-                <option value="">Select Transmission</option>
-                <option value="Manual">Manual</option>
-                <option value="Automatic">Automatic</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label for="category">Category</label>
-              <input
-                type="text"
-                id="category"
-                value={carForm.category || ""}
-                onChange={(e) => setCarForm({ ...carForm, category: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label for="make">Make</label>
-              <input
-                type="text"
-                id="make"
-                value={carForm.make || ""}
-                onChange={(e) => setCarForm({ ...carForm, make: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label for="model">Model</label>
-              <input
-                type="text"
-                id="model"
-                value={carForm.model || ""}
-                onChange={(e) => setCarForm({ ...carForm, model: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label for="featured">Featured</label>
-              <input
-                type="checkbox"
-                id="featured"
-                checked={carForm.featured || false}
-                onChange={(e) => setCarForm({ ...carForm, featured: e.target.checked })}
-              />
-            </div>
-            <div className="form-group">
-              <label for="images">Images</label>
-              <input
-                type="file"
-                id="images"
-                accept="image/*"
-                multiple
-                onChange={(e) => setCarForm({ ...carForm, newImages: Array.from(e.target.files) })}
-              />
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-primary" onClick={() => handleEditCar(editCarOpen)}>
-                Save
+                ×
               </button>
-              <button className="btn btn-outline" onClick={() => setEditCarOpen(null)}>
-                Cancel
-              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label htmlFor="carName">Car Name</label>
+                <input
+                  type="text"
+                  id="carName"
+                  value={carForm.name || ""}
+                  onChange={(e) => setCarForm({ ...carForm, name: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="location">Location</label>
+                <input
+                  type="text"
+                  id="location"
+                  value={carForm.location || ""}
+                  onChange={(e) => setCarForm({ ...carForm, location: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="price">Price (PKR)</label>
+                <input
+                  type="number"
+                  id="price"
+                  value={carForm.price || ""}
+                  onChange={(e) => setCarForm({ ...carForm, price: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="year">Year</label>
+                <input
+                  type="number"
+                  id="year"
+                  value={carForm.year || ""}
+                  onChange={(e) => setCarForm({ ...carForm, year: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="mileage">Mileage (km)</label>
+                <input
+                  type="number"
+                  id="mileage"
+                  value={carForm.mileage || ""}
+                  onChange={(e) => setCarForm({ ...carForm, mileage: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="fuel">Fuel Type</label>
+                <select
+                  id="fuel"
+                  value={carForm.fuel || ""}
+                  onChange={(e) => setCarForm({ ...carForm, fuel: e.target.value })}
+                >
+                  <option value="">Select Fuel Type</option>
+                  <option value="Petrol">Petrol</option>
+                  <option value="Diesel">Diesel</option>
+                  <option value="Hybrid">Hybrid</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="transmission">Transmission</label>
+                <select
+                  id="transmission"
+                  value={carForm.transmission || ""}
+                  onChange={(e) => setCarForm({ ...carForm, transmission: e.target.value })}
+                >
+                  <option value="">Select Transmission</option>
+                  <option value="Manual">Manual</option>
+                  <option value="Automatic">Automatic</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="category">Category</label>
+                <input
+                  type="text"
+                  id="category"
+                  value={carForm.category || ""}
+                  onChange={(e) => setCarForm({ ...carForm, category: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="make">Make</label>
+                <input
+                  type="text"
+                  id="make"
+                  value={carForm.make || ""}
+                  onChange={(e) => setCarForm({ ...carForm, make: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="model">Model</label>
+                <input
+                  type="text"
+                  id="model"
+                  value={carForm.model || ""}
+                  onChange={(e) => setCarForm({ ...carForm, model: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="featured">Featured</label>
+                <input
+                  type="checkbox"
+                  id="featured"
+                  checked={carForm.featured || false}
+                  onChange={(e) => setCarForm({ ...carForm, featured: e.target.checked })}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="newImages">New Images</label>
+                <input
+                  type="file"
+                  id="newImages"
+                  accept="image/png,image/jpeg,image/gif"
+                  multiple
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files)
+                    setCarForm({ ...carForm, newImages: files })
+                  }}
+                />
+              </div>
+              <div className="modal-actions">
+                <button className="btn btn-primary" onClick={() => handleEditCar(editCarOpen)}>
+                  Save
+                </button>
+                <button className="btn btn-outline" onClick={() => setEditCarOpen(null)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Save User Modal */}
+      {confirmSaveOpen && (
+        <div className="modal-overlay">
+          <div className="success-modal-container">
+            <div className="success-modal-content">
+              <span className="success-icon">✔</span>
+              <h3 className="success-title">Are you sure?</h3>
+              <p className="success-message">Do you want to save these changes to your profile?</p>
+              <div className="modal-actions">
+                <button className="btn btn-primary success-button" onClick={confirmSaveUser}>
+                  Yes, Save
+                </button>
+                <button className="btn btn-outline" onClick={() => setConfirmSaveOpen(false)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Edit Car Modal */}
+      {confirmEditCarOpen && (
+        <div className="modal-overlay">
+          <div className="success-modal-container">
+            <div className="success-modal-content">
+              <span className="success-icon">✔</span>
+              <h3 className="success-title">Confirm Car Update</h3>
+              <p className="success-message">Do you want to save these changes to your car listing?</p>
+              <div className="modal-actions">
+                <button
+                  className="btn btn-primary success-button"
+                  onClick={() => confirmEditCar(confirmEditCarOpen)}
+                >
+                  Yes, Save
+                </button>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setConfirmEditCarOpen(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Car Modal */}
+      {confirmDeleteCarOpen && (
+        <div className="modal-overlay">
+          <div className="success-modal-container">
+            <div className="success-modal-content">
+              <span className="success-icon">⚠</span>
+              <h3 className="success-title">Confirm Deletion</h3>
+              <p className="success-message">Are you sure you want to delete this car listing? This action is irreversible.</p>
+              <div className="modal-actions">
+                <button
+                  className="btn btn-error success-button"
+                  onClick={() => confirmDeleteCar(confirmDeleteCarOpen)}
+                >
+                  Yes, Delete
+                </button>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setConfirmDeleteCarOpen(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Account Modal */}
+      {confirmDeleteAccountOpen && (
+        <div className="modal-overlay">
+          <div className="success-modal-container">
+            <div className="success-modal-content">
+              <span className="success-icon">⚠</span>
+              <h3 className="success-title">Confirm Account Deletion</h3>
+              <p className="success-message">Are you sure you want to delete your account? This action is irreversible.</p>
+              <div className="modal-actions">
+                <button
+                  className="btn btn-error success-button"
+                  onClick={confirmDeleteAccount}
+                >
+                  Yes, Delete
+                </button>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setConfirmDeleteAccountOpen(false)}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -638,48 +854,61 @@ const UserProfilePage = () => {
 
       {/* Change Password Modal */}
       {changePasswordOpen && (
-        <div className="modal">
-          <div className="modal-content">
-            <h2>Change Password</h2>
-            <div className="form-group">
-              <label for="currentPassword">Current Password</label>
-              <input
-                type="password"
-                id="currentPassword"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label for="newPassword">New Password</label>
-              <input
-                type="password"
-                id="newPassword"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label for="confirmPassword">Confirm Password</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-primary" onClick={handleChangePassword}>
-                Save
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <h2>Change Password</h2>
+              <button
+                className="close-btn"
+                onClick={() => setChangePasswordOpen(false)}
+                title="Close"
+              >
+                ×
               </button>
-              <button className="btn btn-outline" onClick={() => setChangePasswordOpen(false)}>
-                Cancel
-              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label htmlFor="currentPassword">Current Password</label>
+                <input
+                  type="password"
+                  id="currentPassword"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="newPassword">New Password</label>
+                <input
+                  type="password"
+                  id="newPassword"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Confirm Password</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+              <div className="modal-actions">
+                <button className="btn btn-primary" onClick={handleChangePassword}>
+                  Save
+                </button>
+                <button className="btn btn-outline" onClick={() => setChangePasswordOpen(false)}>
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
+
       <Footer />
+      <ToastContainer />
     </div>
   )
 }
