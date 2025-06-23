@@ -1,9 +1,9 @@
 "use client"
 
 import { useNavigate } from "react-router-dom"
-import Header from "./Header"
-import Footer from "./Footer"
-import AnimatedCounter from "./AnimatedCounter"
+import Header from "../components/Header"
+import Footer from "../components/Footer"
+import AnimatedCounter from "../components/AnimatedCounter"
 import Man1_pic from "../images/Testimonials/Male1.png"
 import Man2_pic from "../images/Testimonials/Male2.png"
 import Man3_pic from "../images/Testimonials/Male3.png"
@@ -12,6 +12,7 @@ import About_team_pic from "../images/Testimonials/About_team_pic.jpg"
 const About = () => {
   const navigate = useNavigate()
 
+  // Navigation function
   const handleNavigation = (page) => {
     if (page === "home") {
       navigate("/")
@@ -23,7 +24,7 @@ const About = () => {
     window.scrollTo(0, 0)
   }
 
-  
+  // Company stats with animation data and unique IDs
   const stats = [
     {
       id: "cars-listed",
@@ -55,6 +56,7 @@ const About = () => {
     },
   ]
 
+  // Team members
   const team = [
     {
       id: 1,
@@ -86,6 +88,7 @@ const About = () => {
     },
   ]
 
+  // Core values
   const values = [
     {
       id: 1,
@@ -112,14 +115,6 @@ const About = () => {
       icon: "👥",
     },
   ]
-
-  
-  const resetCounters = () => {
-    stats.forEach((stat) => {
-      sessionStorage.removeItem(`counter_animated_${stat.id}`)
-    })
-    window.location.reload()
-  }
 
   return (
     <div className="site-wrapper">
@@ -187,8 +182,6 @@ const About = () => {
                 </div>
               ))}
             </div>
-
-            
           </div>
         </section>
 
