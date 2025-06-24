@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom"
 import HomePage from "./pages/HomePage.jsx"
 import AllCars from "./pages/AllCars.jsx"
-import About from "./components/About.jsx"
+import About from "./pages/About";
 import CarRecommendation from "./components/CarRecommendation.jsx"
 import ListCarForm from "./components/ListCarForm.jsx"
 import "./App.css"
