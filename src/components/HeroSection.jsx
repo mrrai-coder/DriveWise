@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
+
 const HeroSection = ({ navigate }) => {
   const reactNavigate = useNavigate();
   const [showSearchInput, setShowSearchInput] = useState(false);

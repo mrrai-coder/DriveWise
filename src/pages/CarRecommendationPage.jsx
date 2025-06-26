@@ -1,13 +1,13 @@
-import { useState, useContext } from "react";
-import { AuthContext } from "../AuthContext";
-import { useNavigate } from "react-router-dom";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import axios from "axios";
+"use client"
 
-const CarRecommendationPage = () => {
-  const { token } = useContext(AuthContext);
-  const navigate = useNavigate();
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import Header from "../components/Header"
+import Footer from "../components/Footer"
+
+const CarRecommendation = () => {
+  const navigate = useNavigate()
+
   const [formData, setFormData] = useState({
     Price: "",
     "Model Year": "",
@@ -17,83 +17,128 @@ const CarRecommendationPage = () => {
     "Body Type": "",
     "Transmission Type": "",
     "Registration Status": "",
-  });
-  const [recommendation, setRecommendation] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  })
+  const [recommendation, setRecommendation] = useState(null)
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  // Navigation function to pass to components
+  const handleNavigation = (page) => {
+    if (page === "home") {
+      navigate("/")
+    } else if (page === "all-cars") {
+      navigate("/all-cars")
+    } else if (page === "about") {
+      navigate("/about")
+    } else if (page === "car-recommendation") {
+      navigate("/car-recommendation")
+    }
+    window.scrollTo(0, 0)
+  }
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(null);
-  };
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+    setError(null)
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setRecommendation(null);
-    setLoading(true);
+    e.preventDefault()
+    setError(null)
+    setRecommendation(null)
+    setLoading(true)
 
     // Validate numeric fields
-    const numericFields = ["Price", "Model Year", "Engine Capacity"];
+    const numericFields = ["Price", "Model Year", "Engine Capacity"]
     for (const field of numericFields) {
       if (!formData[field] || isNaN(formData[field])) {
-        setError(`Please enter a valid number for ${field}`);
-        setLoading(false);
-        return;
+        setError(`Please enter a valid number for ${field}`)
+        setLoading(false)
+        return
       }
     }
 
     // Convert numeric fields to numbers
     const numericFormData = {
-      Price: parseFloat(formData.Price),
-      "Model Year": parseInt(formData["Model Year"], 10),
-      "Engine Capacity": parseFloat(formData["Engine Capacity"]),
+      Price: Number.parseFloat(formData.Price),
+      "Model Year": Number.parseInt(formData["Model Year"], 10),
+      "Engine Capacity": Number.parseFloat(formData["Engine Capacity"]),
       "Engine Type": formData["Engine Type"],
       Assembly: formData.Assembly,
       "Body Type": formData["Body Type"],
       "Transmission Type": formData["Transmission Type"],
       "Registration Status": formData["Registration Status"],
-    };
+    }
 
-    console.log("Sending data:", numericFormData);
+    console.log("Sending data:", numericFormData)
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/predict",
-        numericFormData,
-        {
-          headers: {
-            // Uncomment if /predict requires authentication
-            // Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("Response:", response.data);
-      setRecommendation(response.data.car_name);
+      // Simulate API call for demo - replace with actual API when ready
+      // const response = await axios.post(
+      //   "http://localhost:5000/predict",
+      //   numericFormData,
+      //   {
+      //     headers: {
+      //       // Authorization: `Bearer ${token}`,
+      //     },
+      //   }
+      // )
+
+      // Simulated recommendation based on form data
+      setTimeout(() => {
+        const simulatedRecommendations = [
+          "Toyota Corolla 2021 - Perfect for your budget and preferences!",
+          "Honda Civic 2022 - Great fuel efficiency and reliability!",
+          "Suzuki Swift 2020 - Compact and economical choice!",
+          "Toyota Yaris 2021 - Ideal city car with modern features!",
+          "Honda City 2020 - Spacious sedan with excellent value!",
+        ]
+
+        const randomRecommendation =
+          simulatedRecommendations[Math.floor(Math.random() * simulatedRecommendations.length)]
+        setRecommendation(randomRecommendation)
+        setLoading(false)
+      }, 2000)
     } catch (err) {
-      console.error("Error:", err.response?.data || err.message);
+      console.error("Error:", err.response?.data || err.message)
       if (err.response?.status === 401) {
-        setError("Session expired. Please log in again.");
-        navigate("/"); // Updated to navigate to root route
+        setError("Session expired. Please log in again.")
+        navigate("/")
       } else {
-        setError(err.response?.data?.error || "Error fetching recommendation. Please try again.");
+        setError(err.response?.data?.error || "Error fetching recommendation. Please try again.")
       }
-    } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="site-wrapper">
-      <Header navigate={navigate} />
+      <Header navigate={handleNavigation} />
+
       <main>
+        {/* Page Header */}
+        <section className="page-header">
+          <div className="container">
+            <h1 className="page-title">Car Recommendation</h1>
+            <div className="breadcrumbs">
+              <a href="#" onClick={() => navigate("/")}>
+                Home
+              </a>{" "}
+              / Car Recommendation
+            </div>
+          </div>
+        </section>
+
+        {/* Car Recommendation Content */}
         <section className="container" style={{ padding: "3rem 0" }}>
           <h2 className="section-title">Car Recommendation</h2>
           <p className="description">Tell us your preferences, and we'll recommend the perfect car for you!</p>
+
           <form onSubmit={handleSubmit} className="search-form-container">
             <div className="search-form-grid">
               <div>
-                <label htmlFor="Price" className="block">Budget (PKR)</label>
+                <label htmlFor="Price" className="block">
+                  Budget (PKR)
+                </label>
                 <input
                   type="number"
                   id="Price"
@@ -107,7 +152,9 @@ const CarRecommendationPage = () => {
                 />
               </div>
               <div>
-                <label htmlFor="Model Year" className="block">Model Year</label>
+                <label htmlFor="Model Year" className="block">
+                  Model Year
+                </label>
                 <input
                   type="number"
                   id="Model Year"
@@ -121,7 +168,9 @@ const CarRecommendationPage = () => {
                 />
               </div>
               <div className="select-wrapper">
-                <label htmlFor="Engine Type" className="block">Engine Type</label>
+                <label htmlFor="Engine Type" className="block">
+                  Engine Type
+                </label>
                 <select
                   id="Engine Type"
                   name="Engine Type"
@@ -137,7 +186,9 @@ const CarRecommendationPage = () => {
                 </select>
               </div>
               <div>
-                <label htmlFor="Engine Capacity" className="block">Engine Capacity (cc)</label>
+                <label htmlFor="Engine Capacity" className="block">
+                  Engine Capacity (cc)
+                </label>
                 <input
                   type="number"
                   id="Engine Capacity"
@@ -151,7 +202,9 @@ const CarRecommendationPage = () => {
                 />
               </div>
               <div className="select-wrapper">
-                <label htmlFor="Assembly" className="block">Assembly</label>
+                <label htmlFor="Assembly" className="block">
+                  Assembly
+                </label>
                 <select
                   id="Assembly"
                   name="Assembly"
@@ -166,7 +219,9 @@ const CarRecommendationPage = () => {
                 </select>
               </div>
               <div className="select-wrapper">
-                <label htmlFor="Body Type" className="block">Body Type</label>
+                <label htmlFor="Body Type" className="block">
+                  Body Type
+                </label>
                 <select
                   id="Body Type"
                   name="Body Type"
@@ -185,7 +240,9 @@ const CarRecommendationPage = () => {
                 </select>
               </div>
               <div className="select-wrapper">
-                <label htmlFor="Transmission Type" className="block">Transmission Type</label>
+                <label htmlFor="Transmission Type" className="block">
+                  Transmission Type
+                </label>
                 <select
                   id="Transmission Type"
                   name="Transmission Type"
@@ -200,7 +257,9 @@ const CarRecommendationPage = () => {
                 </select>
               </div>
               <div className="select-wrapper">
-                <label htmlFor="Registration Status" className="block">Registration Status</label>
+                <label htmlFor="Registration Status" className="block">
+                  Registration Status
+                </label>
                 <select
                   id="Registration Status"
                   name="Registration Status"
@@ -221,10 +280,13 @@ const CarRecommendationPage = () => {
               </button>
             </div>
           </form>
+
           {recommendation && (
             <div className="text-center" style={{ marginTop: "2rem" }}>
               <h3 className="section-title">Recommended Car</h3>
-              <p className="car-title">{recommendation}</p>
+              <p className="car-title" style={{ fontSize: "1.25rem", color: "var(--primary)", fontWeight: "600" }}>
+                {recommendation}
+              </p>
             </div>
           )}
           {error && (
@@ -233,18 +295,16 @@ const CarRecommendationPage = () => {
             </div>
           )}
           <div className="text-center" style={{ marginTop: "2rem" }}>
-            <button
-              className="btn btn-outline"
-              onClick={() => navigate("/")} // Updated to navigate to root route
-            >
+            <button className="btn btn-outline" onClick={() => handleNavigation("home")}>
               Back to Home
             </button>
           </div>
         </section>
       </main>
-      <Footer navigate={navigate} />
-    </div>
-  );
-};
 
-export default CarRecommendationPage;
+      <Footer navigate={handleNavigation} />
+    </div>
+  )
+}
+
+export default CarRecommendation

@@ -1,11 +1,16 @@
-import React, { useState, useContext } from "react";
-import { AuthContext } from "../AuthContext";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import axios from "axios";
+"use client"
 
-const SellCarPage = ({ navigate }) => {
-  const { user, token } = useContext(AuthContext);
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import Header from "../components/Header"
+import Footer from "../components/Footer"
+
+const SellCar = () => {
+  const navigate = useNavigate()
+
+  const user = { name: "Demo User" } 
+  const token = "demo-token" 
+
   const [formData, setFormData] = useState({
     name: "",
     location: "",
@@ -18,149 +23,148 @@ const SellCarPage = ({ navigate }) => {
     model: "",
     category: "",
     featured: false,
-  });
-  const [imageFiles, setImageFiles] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  })
+  const [imageFiles, setImageFiles] = useState([])
+  const [imagePreviews, setImagePreviews] = useState([])
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
 
-  // Redirect to login if not authenticated
-  if (!user || !token) {
-    return (
-      <div className="site-wrapper">
-        <Header navigate={navigate} />
-        <main>
-          <section className="container" style={{ padding: "3rem 0" }}>
-            <h2 className="section-title">Please Log In</h2>
-            <p>You must be logged in to list a car for sale.</p>
-            <button
-              className="btn btn-primary"
-              onClick={() => navigate("home")}
-            >
-              Go to Home
-            </button>
-          </section>
-        </main>
-        <Footer navigate={navigate} />
-      </div>
-    );
+
+  const handleNavigation = (page) => {
+    if (page === "home") {
+      navigate("/")
+    } else if (page === "all-cars") {
+      navigate("/all-cars")
+    } else if (page === "about") {
+      navigate("/about")
+    } else if (page === "sell-car") {
+      navigate("/sell-car")
+    }
+    window.scrollTo(0, 0)
   }
 
+  
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type, checked } = e.target
     setFormData({
       ...formData,
       [name]: type === "checkbox" ? checked : value,
-    });
-    setError("");
-    setSuccess("");
-  };
+    })
+    setError("")
+    setSuccess("")
+  }
 
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files).slice(0, 5); // Limit to 5 images
+    const files = Array.from(e.target.files).slice(0, 5) 
     if (files.length === 0) {
-      setError("Please select at least one image");
-      setImageFiles([]);
-      setImagePreviews([]);
-      return;
+      setError("Please select at least one image")
+      setImageFiles([])
+      setImagePreviews([])
+      return
     }
 
-    // Validate file types and sizes
-    const validTypes = ["image/jpeg", "image/png", "image/gif"];
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+
+    const validTypes = ["image/jpeg", "image/png", "image/gif"]
+    const maxSize = 5 * 1024 * 1024 
     for (const file of files) {
       if (!validTypes.includes(file.type)) {
-        setError("Please upload valid images (JPEG, PNG, or GIF)");
-        setImageFiles([]);
-        setImagePreviews([]);
-        return;
+        setError("Please upload valid images (JPEG, PNG, or GIF)")
+        setImageFiles([])
+        setImagePreviews([])
+        return
       }
       if (file.size > maxSize) {
-        setError(`Image ${file.name} exceeds 5MB limit`);
-        setImageFiles([]);
-        setImagePreviews([]);
-        return;
+        setError(`Image ${file.name} exceeds 5MB limit`)
+        setImageFiles([])
+        setImagePreviews([])
+        return
       }
     }
 
-    setImageFiles(files);
-    setImagePreviews(files.map((file) => URL.createObjectURL(file)));
-    setError("");
-    setSuccess("");
-  };
+    setImageFiles(files)
+    setImagePreviews(files.map((file) => URL.createObjectURL(file)))
+    setError("")
+    setSuccess("")
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
+    e.preventDefault()
+    setError("")
+    setSuccess("")
 
     // Validate required fields
-    const requiredFields = ["name", "location", "price", "year", "mileage", "fuel", "transmission", "category"];
+    const requiredFields = ["name", "location", "price", "year", "mileage", "fuel", "transmission", "category"]
     for (const field of requiredFields) {
       if (!formData[field]) {
-        setError(`${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
-        return;
+        setError(`${field.charAt(0).toUpperCase() + field.slice(1)} is required`)
+        return
       }
     }
 
     // Validate images
     if (imageFiles.length === 0) {
-      setError("At least one image is required");
-      return;
+      setError("At least one image is required")
+      return
     }
 
     try {
-      const data = new FormData();
+      const data = new FormData()
       // Append form fields
       for (const key in formData) {
-        data.append(key, formData[key]);
+        data.append(key, formData[key])
       }
-      // Append multiple image files
       imageFiles.forEach((file) => {
-        data.append("images", file);
-      });
+        data.append("images", file)
+      })
 
-      const response = await axios.post(
-        "http://localhost:5000/api/list-car",
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            // Note: Don't set Content-Type for FormData; axios sets it automatically
-          },
-        }
-      );
-
-      setSuccess(response.data.message);
-      setFormData({
-        name: "",
-        location: "",
-        price: "",
-        year: "",
-        mileage: "",
-        fuel: "",
-        transmission: "",
-        make: "",
-        model: "",
-        category: "",
-        featured: false,
-      });
-      setImageFiles([]);
-      setImagePreviews([]);
-      // Reset file input
-      document.getElementById("images").value = "";
+      setTimeout(() => {
+        setSuccess("Car listed successfully! Your listing is now live.")
+        setFormData({
+          name: "",
+          location: "",
+          price: "",
+          year: "",
+          mileage: "",
+          fuel: "",
+          transmission: "",
+          make: "",
+          model: "",
+          category: "",
+          featured: false,
+        })
+        setImageFiles([])
+        setImagePreviews([])
+        // Reset file input
+        document.getElementById("images").value = ""
+      }, 1000)
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to list car. Please try again.");
+      setError(err.response?.data?.error || "Failed to list car. Please try again.")
     }
-  };
+  }
 
   return (
     <div className="site-wrapper">
-      <Header navigate={navigate} />
+      <Header navigate={handleNavigation} />
+
       <main>
+        {/* Page Header */}
+        <section className="page-header">
+          <div className="container">
+            <h1 className="page-title">Sell Car</h1>
+            <div className="breadcrumbs">
+              <a href="#" onClick={() => navigate("/")}>
+                Home
+              </a>{" "}
+              / Sell Car
+            </div>
+          </div>
+        </section>
+
+        {/* Sell Car Content */}
         <section className="container" style={{ padding: "3rem 0" }}>
           <h2 className="section-title">Sell Your Car</h2>
           <p className="description">List your car for sale on Drive Wise!</p>
+
           <form onSubmit={handleSubmit} className="search-form-container">
             <div className="search-form-grid">
               <div>
@@ -337,7 +341,7 @@ const SellCarPage = ({ navigate }) => {
                     {imagePreviews.map((preview, index) => (
                       <img
                         key={index}
-                        src={preview}
+                        src={preview || "/placeholder.svg"}
                         alt={`Preview ${index + 1}`}
                         style={{
                           maxWidth: "100px",
@@ -370,6 +374,7 @@ const SellCarPage = ({ navigate }) => {
               </button>
             </div>
           </form>
+
           {error && (
             <div className="text-center" style={{ marginTop: "2rem", color: "#ef4444" }}>
               <p>{error}</p>
@@ -382,9 +387,10 @@ const SellCarPage = ({ navigate }) => {
           )}
         </section>
       </main>
-      <Footer navigate={navigate} />
-    </div>
-  );
-};
 
-export default SellCarPage;
+      <Footer navigate={handleNavigation} />
+    </div>
+  )
+}
+
+export default SellCar
