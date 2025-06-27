@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
-
+const BASE_URL = process.env.REACT_APP_API_URL;
 const FeaturedCars = () => {
   const navigate = useNavigate()
   const [featuredCars, setFeaturedCars] = useState([])
@@ -73,7 +73,7 @@ const FeaturedCars = () => {
               const imageUrl =
                 car.images && car.images.length > 0
                   ? car.images[0].startsWith("/uploads")
-                    ? `${}${car.images[0]}`
+                    ? `${BASE_URL}${car.images[0]}`
                     : car.images[0]
                   : "https://via.placeholder.com/300x200"
 
