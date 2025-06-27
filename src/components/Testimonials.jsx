@@ -84,7 +84,6 @@ const Testimonials = () => {
   const cardsPerView = 3
   const maxSlide = Math.ceil(testimonials.length / cardsPerView) - 1
 
-  // Auto-play functionality
   useEffect(() => {
     if (isAutoPlaying) {
       const interval = setInterval(() => {
@@ -173,5 +172,4 @@ const Testimonials = () => {
     </section>
   )
 }
-
 export default Testimonials
