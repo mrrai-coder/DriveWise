@@ -3,16 +3,17 @@
 import { useEffect } from "react"
 
 const SuccessModal = ({ isOpen, onClose, title, message, buttonText, onButtonClick }) => {
-  if (!isOpen) return null
-
   // Close modal with Escape key
   useEffect(() => {
+    if (!isOpen) return; // Skip effect logic if modal is not open
     const handleEsc = (e) => {
-      if (e.key === "Escape") onClose()
-    }
-    window.addEventListener("keydown", handleEsc)
-    return () => window.removeEventListener("keydown", handleEsc)
-  }, [onClose])
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [isOpen, onClose]); // Add isOpen to dependencies
+
+  if (!isOpen) return null;
 
   return (
     <div className="modal-overlay">
@@ -32,7 +33,7 @@ const SuccessModal = ({ isOpen, onClose, title, message, buttonText, onButtonCli
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SuccessModal
+export default SuccessModal;
