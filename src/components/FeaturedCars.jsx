@@ -11,7 +11,7 @@ const FeaturedCars = () => {
   useEffect(() => {
     const fetchFeaturedCars = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/cars?featured=true&limit=6")
+        const response = await axios.get("${BASE_URL}/api/cars?featured=true&limit=6")
         setFeaturedCars(response.data.cars)
         setLoading(false)
       } catch (err) {
@@ -73,7 +73,7 @@ const FeaturedCars = () => {
               const imageUrl =
                 car.images && car.images.length > 0
                   ? car.images[0].startsWith("/uploads")
-                    ? `http://localhost:5000${car.images[0]}`
+                    ? `${}${car.images[0]}`
                     : car.images[0]
                   : "https://via.placeholder.com/300x200"
 

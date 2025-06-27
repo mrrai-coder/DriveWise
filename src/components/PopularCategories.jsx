@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import axios from "axios"
-
+const  = 'https://drivewise-ahru.onrender.com';
 const PopularCategories = () => {
   const navigate = useNavigate()
   const [categories, setCategories] = useState([])
@@ -22,7 +22,7 @@ const PopularCategories = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/categories")
+        const response = await axios.get("${}/api/categories")
         const backendCategories = response.data
         
         const formattedCategories = Object.keys(categoryStyles).map((name, index) => {
