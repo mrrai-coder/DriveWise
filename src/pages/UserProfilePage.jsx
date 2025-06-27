@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom"
 import Header from "../components/Header"
 import Footer from "../components/Footer"
 import "./UserProfilePage.css"
-const BASE_URL = 'https://drivewise-ahru.onrender.com';
+
 const UserProfilePage = () => {
   const [userData, setUserData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -31,7 +31,7 @@ const UserProfilePage = () => {
   const [carForm, setCarForm] = useState({})
   const navigate = useNavigate()
 
-const BASE_URL = 'https://drivewise-ahru.onrender.com';
+  const BASE_URL = "http://localhost:5000"
 
   // Utility function to get car image with fallback
   const getCarImage = (images, baseUrl) => {

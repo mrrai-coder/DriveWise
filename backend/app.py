@@ -19,16 +19,14 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Load environment variables
-load_dotenv(dotenv_path=os.path.join(os.getcwd(), ".env"))
-
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app, resources={
-    r"/api/*": {"origins": ["http://localhost:3000", "https://drive-wise-iota.vercel.app"]},
-    r"/uploads/*": {"origins": ["http://localhost:3000", "https://drive-wise-iota.vercel.app"]},
-    r"/predict": {"origins": ["http://localhost:3000", "https://drive-wise-iota.vercel.app"]}
+    r"/api/*": {"origins": "http://localhost:3000"},
+    r"/uploads/*": {"origins": "http://localhost:3000"},
+    r"/predict": {"origins": "http://localhost:3000"}
 })
-
 
 # MongoDB configuration
 mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
