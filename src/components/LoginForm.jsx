@@ -5,7 +5,7 @@ import { useState } from "react"
 import axios from "axios"
 import { toast } from "react-toastify"
 import SuccessModal from "./SuccessModal"
-
+const BASE_URL = process.env.REACT_APP_API_URL;
 const LoginForm = ({ isOpen, onClose, openSignup, onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     email: "",
@@ -72,7 +72,7 @@ const LoginForm = ({ isOpen, onClose, openSignup, onLoginSuccess }) => {
       setIsSubmitting(true)
 
       try {
-        const response = await axios.post("http://localhost:5000/api/login", {
+        const response = await axios.post("${BASE_URL}/api/login", {
           email: formData.email,
           password: formData.password,
         })
@@ -102,7 +102,7 @@ const LoginForm = ({ isOpen, onClose, openSignup, onLoginSuccess }) => {
       setIsSubmitting(true)
 
       try {
-        const response = await axios.post("http://localhost:5000/api/forgot-password", {
+        const response = await axios.post("http://:5000/api/forgot-password", {
           email: forgotPasswordForm.email,
         })
 
