@@ -378,60 +378,68 @@ def update_user():
         return jsonify({"error": "Failed to update user details"}), 500
 
 # Update car listing endpoint
-@app.route("/api/update-car/<id>", methods=["PUT"])
+@app.route('/api/update-car/<id>', methods=['PUT'])
 @jwt_required()
-def update_car():
+def update_car(id):
     try:
         user_email = get_jwt_identity()
-        car = cars_collection.find_one({"_id": ObjectId(id), "seller_email": user_email})
+        car = cars_collection.find_one({'_id': ObjectId(id), 'seller_email': user_email})
         if not car:
-            logger.warning(f"Car not found or not authorized: {id} by {user_email}")
-            return jsonify({"error": "Car not found or not authorized"}), 404
+            return jsonify({'error': 'Car not found or not authorized'}), 404
 
-        data = request.form
         update_data = {}
+        for field in ['name', 'location', 'price', 'year', 'mileage', 'fuel', 'transmission', 'category', 'make', 'model', 'featured']:
+            if field in request.form:
+                value = request.form[field]
+                if field in ['price', 'year', 'mileage']:
+                    try:
+                        update_data[field] = float(value) if field == 'price' else int(value)
+                    except ValueError:
+                        return jsonify({'error': f'Invalid {field}'}), 400
+                elif field == 'featured':
+                    update_data[field] = value.lower() == 'true'
+                else:
+                    update_data[field] = value
 
-        for field in ["name", "location", "price", "year", "mileage", "fuel", "transmission", "category", "make", "model"]:
-            if field in data and data[field]:
-                update_data[field] = float(data[field]) if field in ["price", "year", "mileage"] else data[field]
+        # Validate category
+        valid_categories = ["Sedans", "SUVs", "Hatchbacks", "Luxury Cars", "Electric", "Budget Cars"]
+        if 'category' in update_data and update_data['category'] not in valid_categories:
+            return jsonify({'error': f'Invalid category. Must be one of: {", ".join(valid_categories)}'}), 400
 
-        if "featured" in data:
-            update_data["featured"] = data["featured"].lower() == "true"
+        # Handle image uploads
+        new_images = request.files.getlist('images')
+        if new_images:
+            # Delete old images
+            for image_path in car.get('images', []):
+                try:
+                    full_path = os.path.join(app.config['UPLOAD_FOLDER'], image_path.lstrip('/uploads/'))
+                    if os.path.exists(full_path):
+                        os.remove(full_path)
+                except Exception as e:
+                    app.logger.error(f"Error deleting image {image_path}: {str(e)}")
 
-        new_images = []
-        if "images" in request.files:
-            files = request.files.getlist("images")
-            for file in files:
-                if file and allowed_file(file.filename):
-                    file.seek(0, os.SEEK_END)
-                    file_size = file.tell()
-                    if file_size > MAX_FILE_SIZE:
-                        return jsonify({"error": f"File {file.filename} exceeds 5MB limit"}), 400
-                    file.seek(0)
-                    filename = f"{uuid.uuid4().hex}.{file.filename.rsplit('.', 1)[1].lower()}"
-                    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                    file.save(file_path)
-                    new_images.append(f"/uploads/{filename}")
-
-            if new_images:
-                for image_url in car.get("images", []):
-                    if image_url.startswith("/uploads/"):
-                        filename = image_url.split("/")[-1]
-                        file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                        if os.path.exists(file_path):
-                            os.remove(file_path)
-                update_data["images"] = new_images
+            update_data['images'] = []
+            for image in new_images:
+                if image and image.filename:
+                    if not image.mimetype in ['image/png', 'image/jpeg', 'image/gif']:
+                        return jsonify({'error': f'Invalid image type for {image.filename}'}), 400
+                    if image.content_length > 5 * 1024 * 1024:
+                        return jsonify({'error': f'Image {image.filename} exceeds 5MB limit'}), 400
+                    filename = secure_filename(image.filename)
+                    image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    update_data['images'].append(f'/uploads/{filename}')
 
         if not update_data:
-            return jsonify({"error": "No valid data provided"}), 400
+            return jsonify({'error': 'No valid data provided'}), 400
 
-        cars_collection.update_one({"_id": ObjectId(id)}, {"$set": update_data})
-        logger.info(f"Car updated: {id} by {user_email}")
-        return jsonify({"message": "Car updated successfully"}), 200
+        cars_collection.update_one({'_id': ObjectId(id)}, {'$set': update_data})
+        app.logger.info(f"Car updated: {id} by {user_email}")
+        return jsonify({'message': 'Car updated successfully'}), 200
+    except ValueError:
+        return jsonify({'error': 'Invalid car ID'}), 400
     except Exception as e:
-        logger.error(f"Update car error for ID {id}: {str(e)}")
-        return jsonify({"error": "Failed to update car"}), 500
-
+        app.logger.error(f"Update car error for ID {id}: {str(e)}")
+        return jsonify({'error': 'Failed to update car'}), 500
 # Change password endpoint
 @app.route("/api/change-password", methods=["PUT"])
 @jwt_required()
@@ -462,30 +470,31 @@ def change_password():
         return jsonify({"error": "Failed to change password"}), 500
 
 # Delete car listing endpoint
-@app.route("/api/delete-car/<id>", methods=["DELETE"])
+@app.route('/api/delete-car/<id>', methods=['DELETE'])
 @jwt_required()
-def delete_car():
+def delete_car(id):
     try:
         user_email = get_jwt_identity()
-        car = cars_collection.find_one({"_id": ObjectId(id), "seller_email": user_email})
+        car = cars_collection.find_one({'_id': ObjectId(id), 'seller_email': user_email})
         if not car:
-            logger.warning(f"Car not found or not authorized for deletion: {id} by {user_email}")
-            return jsonify({"error": "Car not found or not authorized"}), 404
+            return jsonify({'error': 'Car not found or not authorized'}), 404
 
-        for image_url in car.get("images", []):
-            if image_url.startswith("/uploads/"):
-                filename = image_url.split("/")[-1]
-                file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                if os.path.exists(file_path):
-                    os.remove(file_path)
+        # Delete associated images
+        for image_path in car.get('images', []):
+            try:
+                full_path = os.path.join(app.config['UPLOAD_FOLDER'], image_path.lstrip('/uploads/'))
+                if os.path.exists(full_path):
+                    os.remove(full_path)
+            except Exception as e:
+                app.logger.error(f"Error deleting image {image_path}: {str(e)}")
 
-        cars_collection.delete_one({"_id": ObjectId(id)})
-        logger.info(f"Car deleted: {id} by {user_email}")
-        return jsonify({"message": "Car deleted successfully"}), 200
+        # Delete the car from the database
+        cars_collection.delete_one({'_id': ObjectId(id)})
+        app.logger.info(f"Car deleted: {id} by {user_email}")
+        return jsonify({'message': 'Car deleted successfully'}), 200
     except Exception as e:
-        logger.error(f"Delete car error for ID {id}: {str(e)}")
-        return jsonify({"error": "Failed to delete car"}), 500
-
+        app.logger.error(f"Delete car error for ID {id}: {str(e)}")
+        return jsonify({'error': 'Failed to delete car'}), 500
 # Delete account endpoint
 @app.route("/api/delete-account", methods=["DELETE"])
 @jwt_required()

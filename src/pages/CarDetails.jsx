@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import axios from "axios";
+import { jsPDF } from "jspdf"; // Import jsPDF
 import "../pages/CarDetails.css";
 
 // SVG Icons for specs
@@ -80,6 +81,53 @@ const CarDetails = () => {
     };
     fetchCar();
   }, [carId]);
+
+  // Function to generate and download PDF
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 10;
+    const lineHeight = 10;
+    let y = margin;
+
+    // Title
+    doc.setFontSize(18);
+    doc.text("Car Details", pageWidth / 2, y, { align: "center" });
+    y += lineHeight;
+
+    // Car Information
+    doc.setFontSize(12);
+    doc.text(`Name: ${car.name}`, margin, y);
+    y += lineHeight;
+    doc.text(`Price: PKR ${car.price.toLocaleString()}`, margin, y);
+    y += lineHeight;
+    doc.text(`Location: ${car.location}`, margin, y);
+    y += lineHeight;
+    doc.text(`Year: ${car.year}`, margin, y);
+    y += lineHeight;
+    doc.text(`Mileage: ${car.mileage.toLocaleString()} km`, margin, y);
+    y += lineHeight;
+    doc.text(`Fuel: ${car.fuel}`, margin, y);
+    y += lineHeight;
+    doc.text(`Transmission: ${car.transmission}`, margin, y);
+    y += lineHeight;
+    doc.text(`Make: ${car.make || "N/A"}`, margin, y);
+    y += lineHeight;
+    doc.text(`Model: ${car.model || "N/A"}`, margin, y);
+    y += lineHeight;
+    doc.text(`Posted: ${car.postedDays} days ago`, margin, y);
+    y += lineHeight;
+    doc.text(`Seller Email: ${car.seller_email}`, margin, y);
+    y += lineHeight;
+
+    if (car.featured) {
+      doc.text("Featured: Yes", margin, y);
+      y += lineHeight;
+    }
+
+    // Save the PDF
+    doc.save(`${car.name.replace(/\s+/g, "_")}_details.pdf`);
+  };
 
   if (loading) {
     return (
@@ -258,9 +306,14 @@ const CarDetails = () => {
                     <span className="spec-value">{car.seller_email}</span>
                   </div>
                 </div>
-                <button className="btn btn-primary" onClick={() => navigate("/all-cars")}>
-                  Back to All Cars
-                </button>
+                <div className="car-actions">
+                  <button className="btn btn-primary" onClick={() => navigate("/all-cars")}>
+                    Back to All Cars
+                  </button>
+                  <button className="btn btn-primary" onClick={generatePDF}>
+                    Download PDF
+                  </button>
+                </div>
               </div>
             </div>
           </div>
